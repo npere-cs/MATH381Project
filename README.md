@@ -1,4 +1,4 @@
-# MATH381Project
+# Balanced Labor Modeling at UW HFS Cafes
 
 <hr>
 
@@ -50,3 +50,17 @@ Below are the definitions for the various notation that is found as part of the 
 *  Orin's Place - "OP"
 *  Husky Grind - "HG"
 *  Overpass Espresso - "OV"
+
+## References
+
+## Acknowledgements
+*  Jon Biltucci - Assistant Director, Retail Dining UW HFS
+*  Sara Billey - Professor of Mathematics at the University of Washington
+*  University of Washington Housing &amp; Food Services
+*  University of Washington Department of Mathematics
+
+<hr>
+
+<p style="text-align: center;">
+    &copy; 2022 Jonathan Kwan, Bill Li, Nickolay Perezhogin
+</p>
