@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 
 weekdays = {0: "Mon", 1:"Tue", 2:"Wed", 3:"Thu", 4: "Fri", 5: "Sat", 6:"Sun"} # remember to % 7
-times = [
+staff_times = [
+  "06:30", "06:45",
   "07:00", "07:15", "07:30", "07:45",
   "08:00", "08:15", "08:30", "08:45",
   "09:00", "09:15", "09:30", "09:45",
@@ -14,8 +15,9 @@ times = [
   "15:00", "15:15", "15:30", "15:45",
   "16:00", "16:15", "16:30", "16:45",
   "17:00", "17:15", "17:30", "17:45",
-  "18:00", "18:15", "18:30", "18:45"
-  ]
+  "18:00", "18:15", "18:30"
+]
+times = staff_times[2:47]
 
 """
 Relevant Info to Parse:
@@ -66,7 +68,7 @@ def parsedData():
     if slice["Day Part"] != "---":
       pn_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
   res = {}
-  for day in range(0,7):
+  for day in range(7):
     data = {
       "Timeslot": times,
       "Evolutionary Grounds": eg_sum[:, day],
@@ -79,5 +81,49 @@ def parsedData():
     res[weekdays[day]] = pd.DataFrame(data)
   return res
 
+"""
+Does NOT account for By George or Orin's Place
+"""
+def parsedHours():
+  hours = pd.read_csv("data/Location_Hours.csv")
+  res = {}
+  for day in range(7):
+    df = pd.DataFrame({"Timeslot": times})
+    for i in range(6): # Update this to len(df) later!
+      location = hours["Location"].iloc[i]
+      start = hours[str(weekdays[day])+"Open"].iloc[i]
+      if start != "-":
+        end = hours[str(weekdays[day])+"Close"].iloc[i]
+        start_index = times.index(start)
+        end_index = times.index(end)
+        df[location] = [False] * start_index + [True] * (end_index - start_index) + [False] * (len(times) - end_index)
+      else:
+        df[location] = [False] * len(times)
+    res[weekdays[day]] = df
+  return res
+
+"""
+Does NOT account for By George or Orin's Place
+"""
+def parsedStaffing():
+  hours = pd.read_csv("data/Location_Staffing_Hours.csv")
+  res = {}
+  for day in range(7):
+    df = pd.DataFrame({"Timeslot": staff_times})
+    for i in range(6): # Update this to len(df) later!
+      location = hours["Location"].iloc[i]
+      start = hours[str(weekdays[day])+"Open"].iloc[i]
+      if start != "-":
+        end = hours[str(weekdays[day])+"Close"].iloc[i]
+        start_index = staff_times.index(start)
+        end_index = staff_times.index(end)
+        df[location] = [False] * start_index + [True] * (end_index - start_index) + [False] * (len(staff_times) - end_index)
+      else:
+        df[location] = [False] * len(staff_times)
+    res[weekdays[day]] = df
+  return res
+
 if __name__ == "__main__":
   print(parsedData())
+  print(parsedHours())
+  print(parsedStaffing())
