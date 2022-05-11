@@ -61,6 +61,4 @@ Below are the definitions for the various notation that is found as part of the 
 
 <hr>
 
-<p style="text-align: center;">
-    &copy; 2022 Jonathan Kwan, Bill Li, Nickolay Perezhogin
-</p>
+&copy; 2022 Jonathan Kwan, Bill Li, Nickolay Perezhogin
