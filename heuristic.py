@@ -50,13 +50,13 @@ num_classified = {
 
 # represents the number of workers available to us on each day of week at each location
 num_workers = {
-  "MS": [1, 2, 3, 4, 5, 6, 7],
-  "MG": [1, 2, 3, 4, 5, 6, 7],
-  "PS": [1, 2, 3, 4, 5, 6, 7],
-  "EG": [1, 2, 3, 4, 5, 6, 7],
-  "BG": [1, 2, 3, 4, 5, 6, 7],
-  "HG": [1, 2, 3, 4, 5, 6, 7],
-  "OV": [1, 2, 3, 4, 5, 6, 7]
+  "Mon": 44,
+  "Tue": 43,
+  "Wed": 42,
+  "Thu": 42,
+  "Fri": 41,
+  "Sat": 3,
+  "Sun": 4
 }
 
 # Represents the abbreviated location codes
@@ -127,10 +127,15 @@ print(locations)
 hours = parsing.parsedHours()
 staff_hrs = parsing.parsedStaffing()
 
-# # loop thru the days
-# for day in weekdays:
-#   locations = []
-  
-#   headers = df.columns
-#   # loop thru the locations
-#   for 
+# loop thru the days
+for day in weekdays:
+  staffage = staff_hrs[day]
+
+  # loop thru the locations
+  for location in locations:
+    for bucket in BUCKETS:
+      if (staffage at by george at the bucket == true):
+        for shift_len in SHIFTS:
+          dec_var.append(p.LpVariable(\
+          name="People starting at " + bucket + "with " + shift_len + " long shift", \
+          lowBound=0, cat="Integer"))
