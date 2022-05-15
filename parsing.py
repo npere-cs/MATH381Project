@@ -26,6 +26,13 @@ Relevant Info to Parse:
   # transactions (seems to be equivalent to guests/tables)
 """
 def parsedData():
+  bg = pd.read_csv("fulldata/By_George_Sales.csv")
+  bg_sum = np.zeros((len(times), 7))
+  for i in range(len(bg)):
+    slice = bg.iloc[i]
+    if slice["Day Part"] != "---":
+      bg_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+
   eg = pd.read_csv("fulldata/Evolutionary Grounds Transactional Data.csv")
   eg_sum = np.zeros((len(times), 7))
   for i in range(len(eg)):
@@ -47,36 +54,46 @@ def parsedData():
     if slice["Day Part"] != "---":
       mg_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
 
-  mc = pd.read_csv("fulldata/Microsoft_Transactional_Data.csv")
-  mc_sum = np.zeros((len(times), 7))
-  for i in range(len(mc)):
-    slice = mc.iloc[i]
+  ms = pd.read_csv("fulldata/Microsoft_Transactional_Data.csv")
+  ms_sum = np.zeros((len(times), 7))
+  for i in range(len(ms)):
+    slice = ms.iloc[i]
     if slice["Day Part"] != "---":
-      mc_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+      ms_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
 
-  op = pd.read_csv("fulldata/Overpass Transactional Data.csv")
+  op = pd.read_csv("fulldata/Orins_Sales.csv")
   op_sum = np.zeros((len(times), 7))
   for i in range(len(op)):
     slice = op.iloc[i]
-    if slice["Day Part"] != "---":
+    if slice["Day Part"] != "---" and slice["Table Type"] == "---":
       op_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
 
-  pn = pd.read_csv("fulldata/Parnassus_Transactional_Data.csv")
-  pn_sum = np.zeros((len(times), 7))
-  for i in range(len(pn)):
-    slice = pn.iloc[i]
+  ov = pd.read_csv("fulldata/Overpass Transactional Data.csv")
+  ov_sum = np.zeros((len(times), 7))
+  for i in range(len(ov)):
+    slice = ov.iloc[i]
     if slice["Day Part"] != "---":
-      pn_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+      ov_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+
+  ps = pd.read_csv("fulldata/Parnassus_Transactional_Data.csv")
+  ps_sum = np.zeros((len(times), 7))
+  for i in range(len(ps)):
+    slice = ps.iloc[i]
+    if slice["Day Part"] != "---":
+      ps_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+
   res = {}
   for day in range(7):
     data = {
       "Timeslot": times,
+      "By George": bg_sum[:, day],
       "Evolutionary Grounds": eg_sum[:, day],
       "Husky Grind": hg_sum[:, day],
       "Mary Gates": mg_sum[:, day],
-      "Microsoft Cafe": mc_sum[:, day],
-      "Overpass": op_sum[:, day],
-      "Parnassus": pn_sum[:, day]
+      "Microsoft Cafe": ms_sum[:, day],
+      "Orin's Place": op_sum[:, day],
+      "Overpass": ov_sum[:, day],
+      "Parnassus": ps_sum[:, day]
       }
     res[weekdays[day]] = pd.DataFrame(data)
   return res
@@ -85,6 +102,14 @@ def parsedData():
 
 """
 def parsedSums():
+  bg = pd.read_csv("fulldata/By_George_Sales.csv")
+  bg = bg[bg["Day Part"] == "---"]
+  bg_sum = np.zeros(7)
+  for i in range(len(bg)):
+    slice = bg.iloc[i]
+    if slice["Date"] != "---":
+      bg_sum[int(slice["Date"]) % 7] += slice["# Trans"]
+
   eg = pd.read_csv("fulldata/Evolutionary Grounds Transactional Data.csv")
   eg = eg[eg["Day Part"] == "---"]
   eg_sum = np.zeros(7)
@@ -109,15 +134,15 @@ def parsedSums():
     if slice["Date"] != "---":
       mg_sum[int(slice["Date"]) % 7] += slice["# Trans"]
 
-  mc = pd.read_csv("fulldata/Microsoft_Transactional_Data.csv")
-  mc = mc[mc["Day Part"] == "---"]
-  mc_sum = np.zeros(7)
-  for i in range(len(mc)):
-    slice = mc.iloc[i]
+  ms = pd.read_csv("fulldata/Microsoft_Transactional_Data.csv")
+  ms = ms[ms["Day Part"] == "---"]
+  ms_sum = np.zeros(7)
+  for i in range(len(ms)):
+    slice = ms.iloc[i]
     if slice["Date"] != "---":
-      mc_sum[int(slice["Date"]) % 7] += slice["# Trans"]
+      ms_sum[int(slice["Date"]) % 7] += slice["# Trans"]
 
-  op = pd.read_csv("fulldata/Overpass Transactional Data.csv")
+  op = pd.read_csv("fulldata/Orins_Sales.csv")
   op = op[op["Day Part"] == "---"]
   op_sum = np.zeros(7)
   for i in range(len(op)):
@@ -125,39 +150,49 @@ def parsedSums():
     if slice["Date"] != "---":
       op_sum[int(slice["Date"]) % 7] += slice["# Trans"]
 
-  pn = pd.read_csv("fulldata/Parnassus_Transactional_Data.csv")
-  pn = pn[pn["Day Part"] == "---"]
-  pn_sum = np.zeros(7)
-  for i in range(len(pn)):
-    slice = pn.iloc[i]
+  ov = pd.read_csv("fulldata/Overpass Transactional Data.csv")
+  ov = ov[ov["Day Part"] == "---"]
+  ov_sum = np.zeros(7)
+  for i in range(len(ov)):
+    slice = ov.iloc[i]
     if slice["Date"] != "---":
-      pn_sum[int(slice["Date"]) % 7] += slice["# Trans"]
+      ov_sum[int(slice["Date"]) % 7] += slice["# Trans"]
 
+  ps = pd.read_csv("fulldata/Parnassus_Transactional_Data.csv")
+  ps = ps[ps["Day Part"] == "---"]
+  ps_sum = np.zeros(7)
+  for i in range(len(ps)):
+    slice = ps.iloc[i]
+    if slice["Date"] != "---":
+      ps_sum[int(slice["Date"]) % 7] += slice["# Trans"]
+
+  print(bg_sum)
   print(eg_sum)
   print(hg_sum)
   print(mg_sum)
-  print(mc_sum)
+  print(ms_sum)
   print(op_sum)
-  print(pn_sum)
+  print(ov_sum)
+  print(ps_sum)
   data = {
     "Day of the Week": weekdays.values(),
+    "By George": bg_sum,
     "Evolutionary Grounds": eg_sum,
     "Husky Grind": hg_sum,
     "Mary Gates": mg_sum,
-    "Microsoft Cafe": mc_sum,
-    "Overpass": op_sum,
-    "Parnassus": pn_sum
+    "Microsoft Cafe": ms_sum,
+    "Orin's Place": op_sum,
+    "Overpass": ov_sum,
+    "Parnassus": ps_sum
     }
   return pd.DataFrame(data)
-"""
-Does NOT account for By George or Orin's Place
-"""
+
 def parsedHours():
   hours = pd.read_csv("data/Location_Hours.csv")
   res = {}
   for day in range(7):
     df = pd.DataFrame({"Timeslot": times})
-    for i in range(6): # Update this to len(df) later!
+    for i in range(len(hours)):
       location = hours["Location"].iloc[i]
       start = hours[str(weekdays[day])+"Open"].iloc[i]
       if start != "-":
@@ -170,15 +205,12 @@ def parsedHours():
     res[weekdays[day]] = df
   return res
 
-"""
-Does NOT account for By George or Orin's Place
-"""
 def parsedStaffing():
   hours = pd.read_csv("data/Location_Staffing_Hours.csv")
   res = {}
   for day in range(7):
     df = pd.DataFrame({"Timeslot": staff_times})
-    for i in range(6): # Update this to len(df) later!
+    for i in range(len(df)):
       location = hours["Location"].iloc[i]
       start = hours[str(weekdays[day])+"Open"].iloc[i]
       if start != "-":
@@ -192,7 +224,7 @@ def parsedStaffing():
   return res
 
 if __name__ == "__main__":
-  #print(parsedData())
-  print(parsedSums())
+  print(parsedData())
+  #print(parsedSums())
   #print(parsedHours())
   #print(parsedStaffing())
