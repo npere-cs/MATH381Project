@@ -18,7 +18,7 @@ staff_times = [
   "18:00", "18:15", "18:30"
 ]
 times = staff_times[2:47]
-locations = ["By George", "Evolutionary Grounds", "Husky Grind", "Mary Gates", "Microsoft Cafe", "Orin's Place", "Overpass", "Parnassus"]
+locations = ["BG", "EG", "HG", "MG", "MS", "OP", "OV", "PS"]
 
 """
 Relevant Info to Parse:
@@ -176,7 +176,7 @@ def parsedSums():
   print(ov_sum)
   print(ps_sum)
   data = {
-    "Day of the Week": weekdays.values(),
+    "Weekday": weekdays.values(),
     "BG": bg_sum,
     "EG": eg_sum,
     "HG": hg_sum,
@@ -243,7 +243,7 @@ def parsedHalfHourData():
 
 if __name__ == "__main__":
   #print(parsedData())
-  #print(parsedHalfHourData())
-  #print(parsedSums())
-  print(parsedHours())
-  print(parsedStaffing())
+  print(parsedHalfHourData())
+  print(parsedSums())
+  #print(parsedHours())
+  #print(parsedStaffing())
