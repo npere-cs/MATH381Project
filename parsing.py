@@ -209,19 +209,20 @@ def parsedHours():
 
 def parsedStaffing():
   hours = pd.read_csv("data/Location_Staffing_Hours.csv")
+  staff_times30 = staff_times[::2]
   res = {}
   for day in range(7):
-    df = pd.DataFrame({"Timeslot": staff_times})
+    df = pd.DataFrame({"Timeslot": staff_times30})
     for i in range(len(hours)):
       location = hours["Location"].iloc[i]
       start = hours[str(weekdays[day])+"Open"].iloc[i]
       if start != "-":
         end = hours[str(weekdays[day])+"Close"].iloc[i]
-        start_index = staff_times.index(start)
-        end_index = staff_times.index(end)
-        df[location] = [False] * start_index + [True] * (end_index - start_index) + [False] * (len(staff_times) - end_index)
+        start_index = staff_times30.index(start)
+        end_index = staff_times30.index(end)
+        df[location] = [False] * start_index + [True] * (end_index - start_index) + [False] * (len(staff_times30) - end_index)
       else:
-        df[location] = [False] * len(staff_times)
+        df[location] = [False] * len(staff_times30)
     res[weekdays[day]] = df
   return res
 
@@ -245,4 +246,4 @@ if __name__ == "__main__":
   #print(parsedHalfHourData())
   #print(parsedSums())
   print(parsedHours())
-  #print(parsedStaffing())
+  print(parsedStaffing())
