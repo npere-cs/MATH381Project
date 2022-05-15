@@ -62,10 +62,26 @@ SHIFTS = ["2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00"]
 # Fills the decision variables for each time bucket for regular employees
 for start_time in range(len(BUCKETS)):
   shift_times = []
+  # Fills the shift lengths at the given time bucket
   for shift in range(len(SHIFTS)):
     shift_times.append(p.LpVariable(\
-      name="People starting at " + BUCKETS[start_time] + "with " + SHIFTS[shift] + " long shift", \
+      name=\
+      "People starting at " + BUCKETS[start_time] + "with " + SHIFTS[shift] + " long shift", \
       lowBound=0, cat="Integer"))
+  # Fills decision variables for classified workers (8.5 hr fixed shift)
+  shift_times.append(p.LpVariable(\
+    name = "Classified starting at " + BUCKETS[start_time] + "with 8:30 long shift",\
+    lowBound=0, cat="Integer"))
+  dec_var.append(shift_times)
 
 
-# Fills decision variables for classified workers (8.5 hr fixed shift)
+
+'''
+MIN the sum of all the buckets such that the ratio of transactions to worker is minimized
+
+MAX the sum of all the buckets such that the ratio of workers to transaction is maximized
+
+Dictionary with transactional data:
+Key: value
+weekday: df of (rows: timeslots, cols: locations)
+'''
