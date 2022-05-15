@@ -177,14 +177,14 @@ def parsedSums():
   print(ps_sum)
   data = {
     "Day of the Week": weekdays.values(),
-    "By George": bg_sum,
-    "Evolutionary Grounds": eg_sum,
-    "Husky Grind": hg_sum,
-    "Mary Gates": mg_sum,
-    "Microsoft Cafe": ms_sum,
-    "Orin's Place": op_sum,
-    "Overpass": ov_sum,
-    "Parnassus": ps_sum
+    "BG": bg_sum,
+    "EG": eg_sum,
+    "HG": hg_sum,
+    "MG": mg_sum,
+    "MS": ms_sum,
+    "OP": op_sum,
+    "OV": ov_sum,
+    "PS": ps_sum
     }
   return pd.DataFrame(data)
 
