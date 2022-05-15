@@ -5,6 +5,15 @@ import pulp as p
 # MS LP
 
 model = p.LpProblem(name="Heuristic", sense=p.LpMinimize)
+'''
+------------------------------------------
+For use later when we want to figure out the number of people to assign
+to each location
+Dictionary with transactional data:
+Key: value
+weekday: df of (rows: timeslots, cols: locations)
+------------------------------------------
+'''
 # x = []
 # for i in range(0, 24):
 #   if (i < 10):
@@ -56,7 +65,7 @@ Classified (FIXED):
 BUCKETS = ["07:00", "07:30", "08:00", "08:30",
   "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", 
   "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", 
-  "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"]
+  "15:00", "15:30", "16:00", "16:30", "17:00"] # omitted 17:30 since that is the last time anyone is working
 SHIFTS = ["2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00"]
 
 # Fills the decision variables for each time bucket for regular employees
@@ -77,11 +86,13 @@ for start_time in range(len(BUCKETS)):
 
 
 '''
-MIN the sum of all the buckets such that the ratio of transactions to worker is minimized
-
 MAX the sum of all the buckets such that the ratio of workers to transaction is maximized
 
-Dictionary with transactional data:
-Key: value
-weekday: df of (rows: timeslots, cols: locations)
+sum up all transactional data within each bucket of time across all mondays
+
+dictionary
+key: value
+weekday: df of (rows: ALL time buckets, cols: locations)
+
+
 '''
