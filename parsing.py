@@ -18,6 +18,7 @@ staff_times = [
   "18:00", "18:15", "18:30"
 ]
 times = staff_times[2:47]
+locations = ["By George", "Evolutionary Grounds", "Husky Grind", "Mary Gates", "Microsoft Cafe", "Orin's Place", "Overpass", "Parnassus"]
 
 """
 Relevant Info to Parse:
@@ -189,19 +190,20 @@ def parsedSums():
 
 def parsedHours():
   hours = pd.read_csv("data/Location_Hours.csv")
+  times30 = times[::2]
   res = {}
   for day in range(7):
-    df = pd.DataFrame({"Timeslot": times})
+    df = pd.DataFrame({"Timeslot": times30})
     for i in range(len(hours)):
       location = hours["Location"].iloc[i]
       start = hours[str(weekdays[day])+"Open"].iloc[i]
       if start != "-":
         end = hours[str(weekdays[day])+"Close"].iloc[i]
-        start_index = times.index(start)
-        end_index = times.index(end)
-        df[location] = [False] * start_index + [True] * (end_index - start_index) + [False] * (len(times) - end_index)
+        start_index = times30.index(start)
+        end_index = times30.index(end)
+        df[location] = [False] * start_index + [True] * (end_index - start_index) + [False] * (len(times30) - end_index)
       else:
-        df[location] = [False] * len(times)
+        df[location] = [False] * len(times30)
     res[weekdays[day]] = df
   return res
 
@@ -210,7 +212,7 @@ def parsedStaffing():
   res = {}
   for day in range(7):
     df = pd.DataFrame({"Timeslot": staff_times})
-    for i in range(len(df)):
+    for i in range(len(hours)):
       location = hours["Location"].iloc[i]
       start = hours[str(weekdays[day])+"Open"].iloc[i]
       if start != "-":
@@ -223,8 +225,24 @@ def parsedStaffing():
     res[weekdays[day]] = df
   return res
 
+def parsedHalfHourData():
+  data = parsedData()
+  res = {}
+  for weekday in data.keys():
+    df15 = data[weekday]
+    df30 = pd.DataFrame()
+    for i in range(len(times[::2]) - 1):
+      slice1 = df15.iloc[2 * i]
+      slice2 = df15.iloc[2 * i + 1]
+      df30.loc[i, "Timeslot"] = slice1["Timeslot"]
+      for loc in locations:
+        df30.loc[i, loc] = slice1[loc] + slice2[loc]
+    res[weekday] = df30
+  return res
+
 if __name__ == "__main__":
-  print(parsedData())
+  #print(parsedData())
+  #print(parsedHalfHourData())
   #print(parsedSums())
-  #print(parsedHours())
+  print(parsedHours())
   #print(parsedStaffing())
