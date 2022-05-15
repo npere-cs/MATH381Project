@@ -87,14 +87,14 @@ def parsedData():
   for day in range(7):
     data = {
       "Timeslot": times,
-      "By George": bg_sum[:, day],
-      "Evolutionary Grounds": eg_sum[:, day],
-      "Husky Grind": hg_sum[:, day],
-      "Mary Gates": mg_sum[:, day],
-      "Microsoft Cafe": ms_sum[:, day],
-      "Orin's Place": op_sum[:, day],
-      "Overpass": ov_sum[:, day],
-      "Parnassus": ps_sum[:, day]
+      "BG": bg_sum[:, day],
+      "EG": eg_sum[:, day],
+      "HG": hg_sum[:, day],
+      "MG": mg_sum[:, day],
+      "MS": ms_sum[:, day],
+      "OP": op_sum[:, day],
+      "OV": ov_sum[:, day],
+      "PS": ps_sum[:, day]
       }
     res[weekdays[day]] = pd.DataFrame(data)
   return res
