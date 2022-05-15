@@ -38,25 +38,25 @@ model = p.LpProblem(name="Heuristic", sense=p.LpMinimize)
 
 # represents number of FIXED classified positions at location
 num_classified = {
-  "ms": 0,
-  "mg": 0,
-  "ps": 0,
-  "eg": 0,
-  "bg": 0,
-  "op": 0,
-  "hg": 0,
-  "ov": 0
+  "MS": 0,
+  "MG": 0,
+  "PS": 0,
+  "EG": 0,
+  "BG": 0,
+  "OP": 0,
+  "HG": 0,
+  "OV": 0
 }
 
 # represents the number of workers available to us on each day of week at each location
 num_workers = {
-  "ms": [1, 2, 3, 4, 5, 6, 7],
-  "mg": [1, 2, 3, 4, 5, 6, 7],
-  "ps": [1, 2, 3, 4, 5, 6, 7],
-  "eg": [1, 2, 3, 4, 5, 6, 7],
-  "bg": [1, 2, 3, 4, 5, 6, 7],
-  "hg": [1, 2, 3, 4, 5, 6, 7],
-  "ov": [1, 2, 3, 4, 5, 6, 7]
+  "MS": [1, 2, 3, 4, 5, 6, 7],
+  "MG": [1, 2, 3, 4, 5, 6, 7],
+  "PS": [1, 2, 3, 4, 5, 6, 7],
+  "EG": [1, 2, 3, 4, 5, 6, 7],
+  "BG": [1, 2, 3, 4, 5, 6, 7],
+  "HG": [1, 2, 3, 4, 5, 6, 7],
+  "OV": [1, 2, 3, 4, 5, 6, 7]
 }
 
 # Represents the abbreviated location codes
@@ -122,7 +122,10 @@ transacs = parsing.parsedHalfHourData()
 weekdays = list(transacs.keys())
 # locations
 locations = list(transacs[weekdays[0]].columns[1:9])
+print(locations)
 
+hours = parsing.parsedHours()
+staff_hrs = parsing.parsedStaffing()
 
 # # loop thru the days
 # for day in weekdays:
