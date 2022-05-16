@@ -4,7 +4,7 @@ import pulp as p
 import parsing
 from itertools import compress
 
-model = p.LpProblem(name="Heuristic", sense=p.LpMinimize)
+# model = p.LpProblem(name="Heuristic", sense=p.LpMinimize)
 
 # x = []
 # for i in range(0, 24):
@@ -82,22 +82,6 @@ Classified (FIXED):
 SHIFTS = ["2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00"]
 # SHIFTS = ["3:30"]
 
-'''
-MAX the sum of all the buckets such that the ratio of workers to transaction is maximized
-
-sum up all transactional data within each bucket of time across all mondays
-
-dictionary
-key: value
-weekday: df of (rows: ALL time buckets, cols: locations)
-
-
-days of the week - outer
-location - middle
-buckets - deepest
-
-'''
-
 # dictionary containing the transactional data for each day of the week at each location
 # for each 30 minute interval
 transacs = parsing.parsedHalfHourData()
@@ -122,26 +106,33 @@ active_workers = [] # 2D Array for active workers at a time active_workers[curre
 for bucket_idx in range(num_buckets):
   active_workers.append([])
 
+classified = []
 dec_var = [] # 2D Array for Decision Vars dec_var[time_shift_start][shift_length]
 for bucket_idx in range(num_buckets): # Goes through the indicies of the possible times that staff can start a shift
   shifts_at_bucket = [] # stores the possible shifts that can be started at the current time bucket
   for shift_idx in range(len(SHIFTS)): # goes through the indicies of the possible shift lengths
     if ((4 + shift_idx + bucket_idx) <= num_buckets): # checks to make sure that the shift is feasible provided the number of time left in the work day
+      var = p.LpVariable(\
+        name="People starting at " + work_hours[bucket_idx] + " with " + SHIFTS[shift_idx] + " long shift", \
+        lowBound=0, cat="Integer")
       for work_bucket in range(4 + shift_idx): # this loop fills in when workers are actively working
-        active_workers[bucket_idx + work_bucket].append(work_hours[bucket_idx] + " " + SHIFTS[shift_idx])
-      shifts_at_bucket.append(work_hours[bucket_idx] + " " + SHIFTS[shift_idx])
+        active_workers[bucket_idx + work_bucket].append(var) # work_hours[bucket_idx] + " " + SHIFTS[shift_idx]
+      shifts_at_bucket.append(var) # work_hours[bucket_idx] + " " + SHIFTS[shift_idx]
       # shifts_at_bucket.append(p.LpVariable(\
       #   name="People starting at " + work_hours[bucket_idx] + " with " + SHIFTS[shift_idx] + " long shift", \
       #   lowBound=0, cat="Integer"))
   if ((17 + bucket_idx) <= num_buckets): # checks whether the classified position starting at the current time is feasible
+    var = p.LpVariable(\
+      name="Classified starting at " + work_hours[bucket_idx] + " with 8:30 long shift", \
+       lowBound=0, cat="Integer")
     for work_bucket in range(17): # adds the classified position as an active worker at each appropriate position
-      active_workers[bucket_idx + work_bucket].append(work_hours[bucket_idx] + " " + "8:30 CF")
-    shifts_at_bucket.append(work_hours[bucket_idx] + " " + "8:30 CF")
+      active_workers[bucket_idx + work_bucket].append(var) # work_hours[bucket_idx] + " " + "8:30 CF"
+    classified.append(var) # work_hours[bucket_idx] + " " + "8:30 CF"
   dec_var.append(shifts_at_bucket)
 
 
 # print(dec_var)
-print(active_workers)
+# print(active_workers)
 
 workers_MS_Mon = 6
 classified_MS_Mon = 1
@@ -149,25 +140,18 @@ classified_MS_Mon = 1
 
 
 
+MS_mon_model = p.LpProblem(name="Heuristic", sense=p.LpMaximize)
 
-# OBJECTIVE FUNCTION CONCATINATION
+# OBJECTIVE FUNCTION
 
-'''
-for day in weekdays:
-  transac_data = transacs[day]
-  for location in locations:
+transac_data_mon = transacs["Mon"]
+MS_mon_transac = list(transac_data_mon["MS"])[0:(21 + 1)]
+obj = 0
+for transac_index in range(len(MS_mon_transac)):
+  if not (MS_mon_transac[transac_index] <= 0.00001):
+    obj += p.lpSum(active_workers[transac_index]) / MS_mon_transac[transac_index]
 
-
-first hour: only one decision var
-2nd hour: two
-3rd hour: three
-4th
-
-
-'''
-transac_data_mon = transacs["Mon"];
-
-
+MS_mon_model += obj
 
 # constraints
 '''
@@ -176,6 +160,15 @@ minimum number of workers at each bucket has to be at least 2
 
 sum of all workers present on a given day can not exceed the number of workers that can
 work on that day
-
-
 '''
+# min of 2 workers at any given time
+for workers in active_workers:
+  MS_mon_model += p.lpSum(workers) >= 2
+
+# sum of all classified shifts equals to the number of classified workers required
+MS_mon_model += p.lpSum([classified[i] for i in range(len(classified))]) == classified_MS_Mon
+
+# sum of all shifts must equal to the number of workers allocated to MS on Mon
+MS_mon_model += p.lpSum([dec_var[i][j] for i in range(len(dec_var)) for j in range(len(dec_var[i]))]) == workers_MS_Mon
+
+status = MS_mon_model.solve()
