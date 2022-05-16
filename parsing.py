@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-weekdays = {0: "Mon", 1:"Tue", 2:"Wed", 3:"Thu", 4: "Fri", 5: "Sat", 6:"Sun"} # remember to % 7
+weekdays = {0: "Mon", 1:"Tue", 2:"Wed", 3:"Thu", 4: "Fri", 5: "Sat", 6:"Sun"}
 staff_times = [
   "06:30", "06:45",
   "07:00", "07:15", "07:30", "07:45",
@@ -17,14 +17,14 @@ staff_times = [
   "17:00", "17:15", "17:30", "17:45",
   "18:00", "18:15", "18:30"
 ]
-times = staff_times[2:47]
+times = staff_times[2:47] # location hours don't include setup or cleanup
 locations = ["BG", "EG", "HG", "MG", "MS", "OP", "OV", "PS"]
 
 """
-Relevant Info to Parse:
-  Day of the week
-  Time period
-  # transactions (seems to be equivalent to guests/tables)
+Returns dictionary where keys are each day of the week and values are DataFrames such that:
+  Rows represent 15-minute timeslots
+  Columns represent different locations
+  Elements represent sum of transactions for one weekday, time, and location over all data
 """
 def parsedData():
   bg = pd.read_csv("fulldata/By_George_Sales.csv")
@@ -100,7 +100,7 @@ def parsedData():
   return res
 
 """
-
+Returns DataFrame of sum of transactions over all locations and weekdays.
 """
 def parsedSums():
   bg = pd.read_csv("fulldata/By_George_Sales.csv")
@@ -188,6 +188,12 @@ def parsedSums():
     }
   return pd.DataFrame(data)
 
+"""
+Returns dictionary where keys are each day of the week and values are DataFrames such that:
+  Rows represent 30-minute timeslots
+  Columns represent different locations
+  Elements are true if locations are open, false otherwise
+"""
 def parsedHours():
   hours = pd.read_csv("data/Location_Hours.csv")
   times30 = times[::2]
@@ -201,12 +207,19 @@ def parsedHours():
         end = hours[str(weekdays[day])+"Close"].iloc[i]
         start_index = times30.index(start)
         end_index = times30.index(end)
-        df[location] = [False] * start_index + [True] * (end_index - start_index) + [False] * (len(times30) - end_index)
+        df[location] = [False] * start_index + [True] * (end_index - start_index)\
+          + [False] * (len(times30) - end_index)
       else:
         df[location] = [False] * len(times30)
     res[weekdays[day]] = df
   return res
 
+"""
+Returns dictionary where keys are each day of the week and values are DataFrames such that:
+  Rows represent 30-minute timeslots
+  Columns represent different locations
+  Elements are true if locations need workers, false otherwise
+"""
 def parsedStaffing():
   hours = pd.read_csv("data/Location_Staffing_Hours.csv")
   staff_times30 = staff_times[::2]
@@ -220,12 +233,16 @@ def parsedStaffing():
         end = hours[str(weekdays[day])+"Close"].iloc[i]
         start_index = staff_times30.index(start)
         end_index = staff_times30.index(end)
-        df[location] = [False] * start_index + [True] * (end_index - start_index) + [False] * (len(staff_times30) - end_index)
+        df[location] = [False] * start_index + [True] * (end_index - start_index)\
+          + [False] * (len(staff_times30) - end_index)
       else:
         df[location] = [False] * len(staff_times30)
     res[weekdays[day]] = df
   return res
 
+"""
+Returns transactional data, but in 30-minute intervals instead of 15-minute intervals
+"""
 def parsedHalfHourData():
   data = parsedData()
   res = {}
@@ -242,8 +259,8 @@ def parsedHalfHourData():
   return res
 
 if __name__ == "__main__":
-  #print(parsedData())
-  print(parsedHalfHourData())
+  print(parsedData())
   print(parsedSums())
-  #print(parsedHours())
-  #print(parsedStaffing())
+  print(parsedHours())
+  print(parsedStaffing())
+  print(parsedHalfHourData())
