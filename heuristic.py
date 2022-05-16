@@ -79,8 +79,8 @@ Classified (FIXED):
 8:30 hrs
 '''
 # Represents the possible shift lengths employees can take on
-# SHIFTS = ["2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00"]
-SHIFTS = ["3:30"]
+SHIFTS = ["2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00"]
+# SHIFTS = ["3:30"]
 
 # # Fills the decision variables for each time bucket for regular employees
 # for start_time in range(len(BUCKETS)):
@@ -124,26 +124,62 @@ transacs = parsing.parsedHalfHourData()
 weekdays = list(transacs.keys())
 # locations
 locations = list(transacs[weekdays[0]].columns[1:9])
-print(locations)
 
 hours = parsing.parsedHours()
 staff_hrs = parsing.parsedStaffing()
 
 # DECISION VARIABLE CREATION
 
-# loop thru the days
-for day in weekdays:
-  # get the hours in which staff is needed
-  staffage = staff_hrs[day]
-  # loop thru the locations
-  for location in locations:
-    work_hours = list(compress(BUCKETS, staff_hrs[day][location]))
-    # each possible time bucket
-    for bucket in work_hours:
-      for shift_len in SHIFTS:
-        dec_var.append(p.LpVariable(\
-        name="People starting at " + bucket + "with " + shift_len + " long shift", \
-        lowBound=0, cat="Integer"))
+# # loop thru the days
+# for day in weekdays:
+#   # get the hours in which staff is needed
+#   staffage = staff_hrs[day]
+#   # loop thru the locations
+#   for location in locations:
+#     work_hours = list(compress(BUCKETS, staff_hrs[day][location]))
+#     hour_at_location = [];
+#     # each possible time bucket
+#     for bucket in work_hours:
+#       shift_vars = [];
+#       for shift_index in range(len(SHIFTS)):
+#         shift_vars.append(p.LpVariable(\
+#         name="People starting at " + bucket + "with " + SHIFTS[shift_index] + " long shift", \
+#         lowBound=0, cat="Integer"))
+
+staffage = staff_hrs["Mon"]
+work_hours = list(compress(BUCKETS, staffage["MS"]))
+# print(work_hours)
+num_buckets = len(work_hours)
+active_workers = [] # 2D Array for active workers at a time active_workers[current_time][shift_of_workers]
+
+# creates an empty structure where we can store the people working at each time bucket
+for bucket_idx in range(num_buckets):
+  active_workers.append([])
+
+dec_var = [] # 2D Array for Decision Vars dec_var[time_shift_start][shift_length]
+for bucket_idx in range(num_buckets): # Goes through the indicies of the possible times that staff can start a shift
+  shifts_at_bucket = [] # stores the possible shifts that can be started at the current time bucket
+  for shift_idx in range(len(SHIFTS)): # goes through the indicies of the possible shift lengths
+    if ((4 + shift_idx + bucket_idx) <= num_buckets): # checks to make sure that the shift is feasible provided the number of time left in the work day
+      for work_bucket in range(4 + shift_idx): # this loop fills in when workers are actively working
+        active_workers[bucket_idx + work_bucket].append(work_hours[bucket_idx] + " " + SHIFTS[shift_idx])
+      shifts_at_bucket.append(work_hours[bucket_idx] + " " + SHIFTS[shift_idx])
+      # shifts_at_bucket.append(p.LpVariable(\
+      #   name="People starting at " + work_hours[bucket_idx] + " with " + SHIFTS[shift_idx] + " long shift", \
+      #   lowBound=0, cat="Integer"))
+  if ((17 + bucket_idx) <= num_buckets): # checks whether the classified position starting at the current time is feasible
+    for work_bucket in range(17): # adds the classified position as an active worker at each appropriate position
+      active_workers[bucket_idx + work_bucket].append(work_hours[bucket_idx] + " " + "8:30 CF")
+    shifts_at_bucket.append(work_hours[bucket_idx] + " " + "8:30 CF")
+  dec_var.append(shifts_at_bucket)
+
+
+
+
+# print(dec_var)
+print(active_workers)
+
+
 
 # OBJECTIVE FUNCTION CONCATINATION
 
@@ -160,6 +196,9 @@ first hour: only one decision var
 
 
 '''
+transac_data_mon = transacs["Mon"];
+
+
 
 # constraints
 '''
