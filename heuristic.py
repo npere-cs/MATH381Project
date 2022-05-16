@@ -129,6 +129,8 @@ print(locations)
 hours = parsing.parsedHours()
 staff_hrs = parsing.parsedStaffing()
 
+# DECISION VARIABLE CREATION
+
 # loop thru the days
 for day in weekdays:
   # get the hours in which staff is needed
@@ -143,8 +145,29 @@ for day in weekdays:
         name="People starting at " + bucket + "with " + shift_len + " long shift", \
         lowBound=0, cat="Integer"))
 
+# OBJECTIVE FUNCTION CONCATINATION
+
 '''
 for day in weekdays:
   transac_data = transacs[day]
+  for location in locations:
+
+
+first hour: only one decision var
+2nd hour: two
+3rd hour: three
+4th
+
+
+'''
+
+# constraints
+'''
+minimum number of workers at each bucket has to be at least 2
+  with the exception of weekends where there has to be at least 1
+
+sum of all workers present on a given day can not exceed the number of workers that can
+work on that day
+
 
 '''
