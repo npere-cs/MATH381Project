@@ -129,13 +129,22 @@ staff_hrs = parsing.parsedStaffing()
 
 # loop thru the days
 for day in weekdays:
+  # get the hours in which staff is needed
   staffage = staff_hrs[day]
-
   # loop thru the locations
   for location in locations:
+    # each possible time bucket
     for bucket in BUCKETS:
-      if (staffage at by george at the bucket == true):
+      # if staffage at location at the time bucket is needed
+      if (staffage at location at the bucket == true):
+        # generate decision variables for each of the possible lengths of shift
         for shift_len in SHIFTS:
           dec_var.append(p.LpVariable(\
           name="People starting at " + bucket + "with " + shift_len + " long shift", \
           lowBound=0, cat="Integer"))
+
+'''
+for day in weekdays:
+  transac_data = transacs[day]
+  
+'''
