@@ -79,7 +79,8 @@ Classified (FIXED):
 8:30 hrs
 '''
 # Represents the possible shift lengths employees can take on
-SHIFTS = ["2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00"]
+# SHIFTS = ["2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00"]
+SHIFTS = ["3:30"]
 
 # # Fills the decision variables for each time bucket for regular employees
 # for start_time in range(len(BUCKETS)):
@@ -134,12 +135,13 @@ for day in weekdays:
   staffage = staff_hrs[day]
   # loop thru the locations
   for location in locations:
-    staffage = list(compress(BUCKETS, staff_hrs[day][location]))
+    work_hours = list(compress(BUCKETS, staff_hrs[day][location]))
     # each possible time bucket
-    for shift in staffage:
-      dec_var.append(p.LpVariable(\
-      name="People starting at " + bucket + "with " + shift_len + " long shift", \
-      lowBound=0, cat="Integer"))
+    for bucket in work_hours:
+      for shift_len in SHIFTS:
+        dec_var.append(p.LpVariable(\
+        name="People starting at " + bucket + "with " + shift_len + " long shift", \
+        lowBound=0, cat="Integer"))
 
 '''
 for day in weekdays:
