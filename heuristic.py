@@ -2,6 +2,7 @@ import numpy as np
 # from pulp import LpMinimize, LpProblem, LpStatus, lpSum, LpVariable
 import pulp as p
 import parsing
+from itertools import compress
 
 model = p.LpProblem(name="Heuristic", sense=p.LpMinimize)
 
@@ -62,7 +63,7 @@ num_workers = {
 # Represents the abbreviated location codes
 LOCATIONS = ["ms", "mg", "ps", "eg", "bg", "op", "hg", "ov"]
 
-# Represent the time intervals at which individual 
+# Represent the time intervals at which individual
 BUCKETS = [
   "06:30", "07:00", "07:30", "08:00", "08:30",
   "09:00",  "09:30", "10:00", "10:30", "11:00",
@@ -133,18 +134,15 @@ for day in weekdays:
   staffage = staff_hrs[day]
   # loop thru the locations
   for location in locations:
+    staffage = list(compress(BUCKETS, staff_hrs[day][location]))
     # each possible time bucket
-    for bucket in BUCKETS:
-      # if staffage at location at the time bucket is needed
-      if (staffage at location at the bucket == true):
-        # generate decision variables for each of the possible lengths of shift
-        for shift_len in SHIFTS:
-          dec_var.append(p.LpVariable(\
-          name="People starting at " + bucket + "with " + shift_len + " long shift", \
-          lowBound=0, cat="Integer"))
+    for shift in staffage:
+      dec_var.append(p.LpVariable(\
+      name="People starting at " + bucket + "with " + shift_len + " long shift", \
+      lowBound=0, cat="Integer"))
 
 '''
 for day in weekdays:
   transac_data = transacs[day]
-  
+
 '''
