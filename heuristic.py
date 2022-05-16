@@ -82,23 +82,6 @@ Classified (FIXED):
 SHIFTS = ["2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00"]
 # SHIFTS = ["3:30"]
 
-# # Fills the decision variables for each time bucket for regular employees
-# for start_time in range(len(BUCKETS)):
-#   shift_times = []
-#   # Fills the shift lengths at the given time bucket
-#   for shift in range(len(SHIFTS)):
-#     shift_times.append(p.LpVariable(\
-#       name=\
-#       "People starting at " + BUCKETS[start_time] + "with " + SHIFTS[shift] + " long shift", \
-#       lowBound=0, cat="Integer"))
-#   # Fills decision variables for classified workers (8.5 hr fixed shift)
-#   shift_times.append(p.LpVariable(\
-#     name = "Classified starting at " + BUCKETS[start_time] + "with 8:30 long shift",\
-#     lowBound=0, cat="Integer"))
-#   dec_var.append(shift_times)
-
-
-
 '''
 MAX the sum of all the buckets such that the ratio of workers to transaction is maximized
 
@@ -115,8 +98,6 @@ buckets - deepest
 
 '''
 
-dec_var = []
-
 # dictionary containing the transactional data for each day of the week at each location
 # for each 30 minute interval
 transacs = parsing.parsedHalfHourData()
@@ -130,21 +111,6 @@ staff_hrs = parsing.parsedStaffing()
 
 # DECISION VARIABLE CREATION
 
-# # loop thru the days
-# for day in weekdays:
-#   # get the hours in which staff is needed
-#   staffage = staff_hrs[day]
-#   # loop thru the locations
-#   for location in locations:
-#     work_hours = list(compress(BUCKETS, staff_hrs[day][location]))
-#     hour_at_location = [];
-#     # each possible time bucket
-#     for bucket in work_hours:
-#       shift_vars = [];
-#       for shift_index in range(len(SHIFTS)):
-#         shift_vars.append(p.LpVariable(\
-#         name="People starting at " + bucket + "with " + SHIFTS[shift_index] + " long shift", \
-#         lowBound=0, cat="Integer"))
 
 staffage = staff_hrs["Mon"]
 work_hours = list(compress(BUCKETS, staffage["MS"]))
@@ -174,10 +140,13 @@ for bucket_idx in range(num_buckets): # Goes through the indicies of the possibl
   dec_var.append(shifts_at_bucket)
 
 
-
-
 # print(dec_var)
 print(active_workers)
+
+workers_MS_Mon = 6
+classified_MS_Mon = 1
+
+
 
 
 
