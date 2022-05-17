@@ -2,6 +2,7 @@ import numpy as np
 # from pulp import LpMinimize, LpProblem, LpStatus, lpSum, LpVariable
 import pulp as p
 import parsing
+import math
 from itertools import compress
 
 # model = p.LpProblem(name="Heuristic", sense=p.LpMinimize)
@@ -39,14 +40,14 @@ from itertools import compress
 
 # represents number of FIXED classified positions at location
 num_classified = {
-  "MS": 0,
+  "MS": 1,
   "MG": 0,
   "PS": 0,
-  "EG": 0,
+  "EG": 2,
   "BG": 0,
   "OP": 0,
   "HG": 0,
-  "OV": 0
+  "OV": 1
 }
 
 # represents the number of workers available to us on each day of week at each location
@@ -176,6 +177,9 @@ MS_mon_model += p.lpSum([dec_var[i][j] for i in range(len(dec_var)) for j in ran
 status = MS_mon_model.solve()
 
 '''
+
+
+
 '''
 Apportionment problem:
 for each day of the week:
@@ -195,11 +199,42 @@ for each day of the week:
 
 
 '''
-workdays = weekdays[0:5]
-for day in workdays:
-  print("test")
 
 '''
-Function that accepts data at a particular weekday 
+Function that accepts average transactional data for different locations at a particular day,
+as well as the total number of workers available to apportion during that day. Returns a list
+of the number of workers to allocate to each location
 '''
-def apportionment()
+def apportionment(data, workers):
+  INCREMENT = 0.1
+  allocation = [0] * len(data)
+  divisor = sum(data) / workers
+  quotas = [0] * len(data)
+  iterations = 0
+  while (sum(allocation) != workers):
+    iterations += 1
+    for idx in range(len(data)):
+      quotas[idx] = data[idx] / divisor
+      lower_quota = math.floor(quotas[idx])
+      geom_mean = math.sqrt(lower_quota * (lower_quota + 1))
+      if quotas[idx] > geom_mean:
+        allocation[idx] = math.ceil(quotas[idx])
+      else:
+        allocation[idx] = math.floor(quotas[idx])
+    if (sum(allocation) < workers):
+      divisor -= INCREMENT
+    else:
+      divisor += INCREMENT
+  print("num iters: " + str(iterations))
+  return allocation
+
+data = parsing.parsedSums()
+workdays = weekdays[0:5]
+
+for day in range(len(workdays)):
+  day_data = list(data.iloc[day])[1:9]
+  workers = num_workers[workdays[day]]
+  allocation = apportionment(day_data, workers)
+  print(workdays[day])
+  print(allocation)
+  print("Allocated: " + str(sum(allocation)) + ", with actual: " + str(num_workers[workdays[day]]))
