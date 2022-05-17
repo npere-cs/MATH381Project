@@ -24,64 +24,136 @@ locations = ["BG", "EG", "HG", "MG", "MS", "OP", "OV", "PS"]
 Returns dictionary where keys are each day of the week and values are DataFrames such that:
   Rows represent 15-minute timeslots
   Columns represent different locations
-  Elements represent sum of transactions for one weekday, time, and location over all data
+  Elements represent average transactions for one weekday, time, and location over all data
 """
 def parsedData():
   bg = pd.read_csv("fulldata/By_George_Sales.csv")
   bg_sum = np.zeros((len(times), 7))
+  bg_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(bg)):
     slice = bg.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      bg_days[int(curr_day) % 7] += 1
     if slice["Day Part"] != "---":
       bg_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+  for timeslot in bg_sum:
+    for day in range(7):
+      if bg_days[day] > 1:
+        timeslot[day] /= bg_days[day]
 
   eg = pd.read_csv("fulldata/Evolutionary Grounds Transactional Data.csv")
   eg_sum = np.zeros((len(times), 7))
+  eg_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(eg)):
     slice = eg.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      eg_days[int(curr_day) % 7] += 1
     if slice["Day Part"] != "---":
       eg_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+  for timeslot in eg_sum:
+    for day in range(7):
+      if eg_days[day] > 1:
+        timeslot[day] /= eg_days[day]
 
   hg = pd.read_csv("fulldata/Husky_Grind_March_Sales.csv")
   hg_sum = np.zeros((len(times), 7))
+  hg_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(hg)):
     slice = hg.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      hg_days[int(curr_day) % 7] += 1
     if slice["Day Part"] != "---" and slice["Net Sales"] > 0:
       hg_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+  for timeslot in hg_sum:
+    for day in range(7):
+      if hg_days[day] > 1:
+        timeslot[day] /= hg_days[day]
 
   mg = pd.read_csv("fulldata/Mary_Gates_Transactional_Data.csv")
   mg_sum = np.zeros((len(times), 7))
+  mg_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(mg)):
     slice = mg.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      mg_days[int(curr_day) % 7] += 1
     if slice["Day Part"] != "---":
       mg_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+  for timeslot in mg_sum:
+    for day in range(7):
+      if mg_days[day] > 1:
+        timeslot[day] /= mg_days[day]
 
   ms = pd.read_csv("fulldata/Microsoft_Transactional_Data.csv")
   ms_sum = np.zeros((len(times), 7))
+  ms_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(ms)):
     slice = ms.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      ms_days[int(curr_day) % 7] += 1
     if slice["Day Part"] != "---":
       ms_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+  for timeslot in ms_sum:
+    for day in range(7):
+      if ms_days[day] > 1:
+        timeslot[day] /= ms_days[day]
 
   op = pd.read_csv("fulldata/Orins_Sales.csv")
   op_sum = np.zeros((len(times), 7))
+  op_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(op)):
     slice = op.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      op_days[int(curr_day) % 7] += 1
     if slice["Day Part"] != "---" and slice["Table Type"] == "---":
       op_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+  for timeslot in op_sum:
+    for day in range(7):
+      if op_days[day] > 1:
+        timeslot[day] /= op_days[day]
 
   ov = pd.read_csv("fulldata/Overpass Transactional Data.csv")
   ov_sum = np.zeros((len(times), 7))
+  ov_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(ov)):
     slice = ov.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      ov_days[int(curr_day) % 7] += 1
     if slice["Day Part"] != "---":
       ov_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+  for timeslot in ov_sum:
+    for day in range(7):
+      if ov_days[day] > 1:
+        timeslot[day] /= ov_days[day]
 
   ps = pd.read_csv("fulldata/Parnassus_Transactional_Data.csv")
   ps_sum = np.zeros((len(times), 7))
+  ps_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(ps)):
     slice = ps.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      ps_days[int(curr_day) % 7] += 1
     if slice["Day Part"] != "---":
       ps_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+  for timeslot in ps_sum:
+    for day in range(7):
+      if ps_days[day] > 1:
+        timeslot[day] /= ps_days[day]
 
   res = {}
   for day in range(7):
@@ -258,9 +330,27 @@ def parsedHalfHourData():
     res[weekday] = df30
   return res
 
+def test():
+  bg = pd.read_csv("fulldata/By_George_Sales.csv")
+  bg_sum = np.zeros((len(times), 7))
+  bg_days = np.zeros(7)
+  curr_day = 0
+  for i in range(len(bg)):
+    slice = bg.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      bg_days[int(curr_day) % 7] += 1
+    if slice["Day Part"] != "---":
+      bg_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+  for timeslot in bg_sum:
+    for day in range(7):
+      if bg_days[day] > 1:
+        timeslot[day] /= bg_days[day]
+  print(bg_sum)
+
 if __name__ == "__main__":
   print(parsedData())
-  print(parsedSums())
-  print(parsedHours())
-  print(parsedStaffing())
-  print(parsedHalfHourData())
+  #print(parsedSums())
+  #print(parsedHours())
+  #print(parsedStaffing())
+  #print(parsedHalfHourData())
