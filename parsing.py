@@ -172,81 +172,137 @@ def parsedData():
   return res
 
 """
-Returns DataFrame of sum of transactions over all locations and weekdays.
+Returns DataFrame of average daily transactions over all locations and weekdays.
 """
 def parsedSums():
   bg = pd.read_csv("fulldata/By_George_Sales.csv")
   bg = bg[bg["Day Part"] == "---"]
   bg_sum = np.zeros(7)
+  bg_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(bg)):
     slice = bg.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      bg_days[int(curr_day) % 7] += 1
     if slice["Date"] != "---":
       bg_sum[int(slice["Date"]) % 7] += slice["# Trans"]
+  for day in range(7):
+    if bg_days[day] > 1:
+      bg_sum[day] /= bg_days[day]
 
   eg = pd.read_csv("fulldata/Evolutionary Grounds Transactional Data.csv")
   eg = eg[eg["Day Part"] == "---"]
   eg_sum = np.zeros(7)
+  eg_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(eg)):
     slice = eg.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      eg_days[int(curr_day) % 7] += 1
     if slice["Date"] != "---":
       eg_sum[int(slice["Date"]) % 7] += slice["# Trans"]
+  for day in range(7):
+    if eg_days[day] > 1:
+      eg_sum[day] /= eg_days[day]
 
   hg = pd.read_csv("fulldata/Husky_Grind_March_Sales.csv")
   hg = hg[hg["Day Part"] == "---"]
   hg_sum = np.zeros(7)
+  hg_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(hg)):
     slice = hg.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      hg_days[int(curr_day) % 7] += 1
     if slice["Date"] != "---":
       hg_sum[int(slice["Date"]) % 7] += slice["# Trans"]
+  for day in range(7):
+    if hg_days[day] > 1:
+      hg_sum[day] /= hg_days[day]
 
   mg = pd.read_csv("fulldata/Mary_Gates_Transactional_Data.csv")
   mg = mg[mg["Day Part"] == "---"]
   mg_sum = np.zeros(7)
+  mg_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(mg)):
     slice = mg.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      mg_days[int(curr_day) % 7] += 1
     if slice["Date"] != "---":
       mg_sum[int(slice["Date"]) % 7] += slice["# Trans"]
+  for day in range(7):
+    if mg_days[day] > 1:
+      mg_sum[day] /= mg_days[day]
 
   ms = pd.read_csv("fulldata/Microsoft_Transactional_Data.csv")
   ms = ms[ms["Day Part"] == "---"]
   ms_sum = np.zeros(7)
+  ms_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(ms)):
     slice = ms.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      ms_days[int(curr_day) % 7] += 1
     if slice["Date"] != "---":
       ms_sum[int(slice["Date"]) % 7] += slice["# Trans"]
+  for day in range(7):
+    if ms_days[day] > 1:
+      ms_sum[day] /= ms_days[day]
 
   op = pd.read_csv("fulldata/Orins_Sales.csv")
   op = op[op["Day Part"] == "---"]
   op_sum = np.zeros(7)
+  op_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(op)):
     slice = op.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      op_days[int(curr_day) % 7] += 1
     if slice["Date"] != "---":
       op_sum[int(slice["Date"]) % 7] += slice["# Trans"]
+  for day in range(7):
+    if op_days[day] > 1:
+      op_sum[day] /= op_days[day]
 
   ov = pd.read_csv("fulldata/Overpass Transactional Data.csv")
   ov = ov[ov["Day Part"] == "---"]
   ov_sum = np.zeros(7)
+  ov_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(ov)):
     slice = ov.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      ov_days[int(curr_day) % 7] += 1
     if slice["Date"] != "---":
       ov_sum[int(slice["Date"]) % 7] += slice["# Trans"]
+  for day in range(7):
+    if ov_days[day] > 1:
+      ov_sum[day] /= ov_days[day]
 
   ps = pd.read_csv("fulldata/Parnassus_Transactional_Data.csv")
   ps = ps[ps["Day Part"] == "---"]
   ps_sum = np.zeros(7)
+  ps_days = np.zeros(7)
+  curr_day = 0
   for i in range(len(ps)):
     slice = ps.iloc[i]
+    if slice["Date"] != "---" and slice["Date"] != curr_day:
+      curr_day = slice["Date"]
+      ps_days[int(curr_day) % 7] += 1
     if slice["Date"] != "---":
       ps_sum[int(slice["Date"]) % 7] += slice["# Trans"]
+  for day in range(7):
+    if ps_days[day] > 1:
+      ps_sum[day] /= ps_days[day]
 
-  print(bg_sum)
-  print(eg_sum)
-  print(hg_sum)
-  print(mg_sum)
-  print(ms_sum)
-  print(op_sum)
-  print(ov_sum)
-  print(ps_sum)
   data = {
     "Weekday": weekdays.values(),
     "BG": bg_sum,
@@ -330,27 +386,9 @@ def parsedHalfHourData():
     res[weekday] = df30
   return res
 
-def test():
-  bg = pd.read_csv("fulldata/By_George_Sales.csv")
-  bg_sum = np.zeros((len(times), 7))
-  bg_days = np.zeros(7)
-  curr_day = 0
-  for i in range(len(bg)):
-    slice = bg.iloc[i]
-    if slice["Date"] != "---" and slice["Date"] != curr_day:
-      curr_day = slice["Date"]
-      bg_days[int(curr_day) % 7] += 1
-    if slice["Day Part"] != "---":
-      bg_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
-  for timeslot in bg_sum:
-    for day in range(7):
-      if bg_days[day] > 1:
-        timeslot[day] /= bg_days[day]
-  print(bg_sum)
-
 if __name__ == "__main__":
-  print(parsedData())
-  #print(parsedSums())
+  #print(parsedData())
+  print(parsedSums())
   #print(parsedHours())
   #print(parsedStaffing())
   #print(parsedHalfHourData())
