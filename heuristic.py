@@ -220,6 +220,9 @@ def apportionment(data, workers):
         allocation[idx] = math.ceil(quotas[idx])
       else:
         allocation[idx] = math.floor(quotas[idx])
+    if iterations % 100 == 0:
+      print(iterations)
+      INCREMENT /= 10
     if (sum(allocation) < workers):
       divisor -= INCREMENT
     else:
@@ -250,7 +253,8 @@ want to apportion (the upper bounded) max number of hours that are available to 
 
 monday_transacs = transacs["Mon"]
 ms_transacs = list(monday_transacs["MS"])
-# print(ms_transacs)
+ms_transacs = ms_transacs[1:len(ms_transacs) - 1]
+print(ms_transacs)
 
-allocated_hours = apportionment(ms_transacs, MS_mon_workers * 5 + 8.5 * num_classified["MS"])
-print(allocated_hours)
+# allocated_hours = apportionment(ms_transacs, MS_mon_workers * 2) # + 8.5 * num_classified["MS"]
+# print(allocated_hours)
