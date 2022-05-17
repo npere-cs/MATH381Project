@@ -81,7 +81,6 @@ Classified (FIXED):
 '''
 # Represents the possible shift lengths employees can take on
 SHIFTS = ["2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00"]
-# SHIFTS = ["3:30"]
 
 # dictionary containing the transactional data for each day of the week at each location
 # for each 30 minute interval
@@ -231,10 +230,27 @@ def apportionment(data, workers):
 data = parsing.parsedTotals()
 workdays = weekdays[0:5]
 
+MS_mon_workers = 0
 for day in range(len(workdays)):
   day_data = list(data.iloc[day])[1:9]
   workers = num_workers[workdays[day]]
   allocation = apportionment(day_data, workers)
+  if day == 0:
+    MS_mon_workers = allocation[4]
   print(workdays[day])
   print(allocation)
   print("Allocated: " + str(sum(allocation)) + ", with actual: " + str(num_workers[workdays[day]]))
+
+
+'''
+Perform apportionment at each location using time buckets of transactional data
+want to apportion (the upper bounded) max number of hours that are available to distribute for workers
++ 8.5 hours for classified positions
+'''
+
+monday_transacs = transacs["Mon"]
+ms_transacs = list(monday_transacs["MS"])
+# print(ms_transacs)
+
+allocated_hours = apportionment(ms_transacs, MS_mon_workers * 5 + 8.5 * num_classified["MS"])
+print(allocated_hours)
