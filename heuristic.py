@@ -228,7 +228,7 @@ def apportionment(data, workers):
   print("num iters: " + str(iterations))
   return allocation
 
-data = parsing.parsedSums()
+data = parsing.parsedTotals()
 workdays = weekdays[0:5]
 
 for day in range(len(workdays)):
