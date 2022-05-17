@@ -95,7 +95,7 @@ staff_hrs = parsing.parsedStaffing()
 
 # DECISION VARIABLE CREATION
 
-
+'''
 staffage = staff_hrs["Mon"]
 work_hours = list(compress(BUCKETS, staffage["MS"]))
 # print(work_hours)
@@ -155,11 +155,13 @@ MS_mon_model += obj
 
 # constraints
 '''
+'''
 minimum number of workers at each bucket has to be at least 2
   with the exception of weekends where there has to be at least 1
 
 sum of all workers present on a given day can not exceed the number of workers that can
 work on that day
+'''
 '''
 # min of 2 workers at any given time
 for workers in active_workers:
@@ -172,3 +174,32 @@ MS_mon_model += p.lpSum([classified[i] for i in range(len(classified))]) == clas
 MS_mon_model += p.lpSum([dec_var[i][j] for i in range(len(dec_var)) for j in range(len(dec_var[i]))]) == workers_MS_Mon
 
 status = MS_mon_model.solve()
+
+'''
+'''
+Apportionment problem:
+for each day of the week:
+ - take the total of all average transactions
+ - divide by total number of workers provided for that day (? include CLASSIFIED)
+ - this will give us STD DIVISOR
+
+ - divide each location's average transactions and divide by STD DIVISOR to get QUOTA
+ - lower quota: n = Math.floor(QUOTA)
+ - geometric mean: sqrt(n * (n + 1))
+ - get the initial allocation thru sum of all:
+ - if quota > geom mean, Math.ceil(QUOTA)
+ - if quota < geom mean, Math.floor(QUOTA)
+
+ - if initial allocation < number of workers decrease the divisor
+ - if initial allocation > number of workers increase the divisor
+
+
+'''
+workdays = weekdays[0:5]
+for day in workdays:
+  print("test")
+
+'''
+Function that accepts data at a particular weekday 
+'''
+def apportionment()
