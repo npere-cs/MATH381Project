@@ -174,7 +174,7 @@ def parsedData():
 """
 Returns DataFrame of average daily transactions over all locations and weekdays.
 """
-def parsedSums():
+def parsedTotals():
   bg = pd.read_csv("fulldata/By_George_Sales.csv")
   bg = bg[bg["Day Part"] == "---"]
   bg_sum = np.zeros(7)
@@ -388,7 +388,7 @@ def parsedHalfHourData():
 
 if __name__ == "__main__":
   #print(parsedData())
-  print(parsedSums())
+  print(parsedTotals())
   #print(parsedHours())
   #print(parsedStaffing())
   #print(parsedHalfHourData())
