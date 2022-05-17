@@ -221,40 +221,44 @@ def apportionment(data, workers):
       else:
         allocation[idx] = math.floor(quotas[idx])
     if iterations % 100 == 0:
-      print(iterations)
       INCREMENT /= 10
+    if iterations == 10000: # DEBUGGING CODE
+      print("OVERFLOW: EXCEEDS REASONABLE NUM ITERATIONS")
+      print("Current allocation: " + str(allocation) + "\nwith sum: " + str(sum(allocation)) \
+        + ", desired sum = " + str(workers))
+      break
     if (sum(allocation) < workers):
       divisor -= INCREMENT
-    else:
+    else: # (sum(allocation) > workers)
       divisor += INCREMENT
   print("num iters: " + str(iterations))
   return allocation
 
+# Parsed Transactional Data
 data = parsing.parsedTotals()
 workdays = weekdays[0:5]
 
-MS_mon_workers = 0
+# Dictionary that stores the key: value pair as DAY: ALLOCATIONS
+allocated_workers_day = {}
+
+# Determines the allocation of individual workers to each location on each day
 for day in range(len(workdays)):
   day_data = list(data.iloc[day])[1:9]
   workers = num_workers[workdays[day]]
   allocation = apportionment(day_data, workers)
-  if day == 0:
-    MS_mon_workers = allocation[4]
+  allocated_workers_day[workdays[day]] = allocation
   print(workdays[day])
   print(allocation)
   print("Allocated: " + str(sum(allocation)) + ", with actual: " + str(num_workers[workdays[day]]))
 
 
-'''
-Perform apportionment at each location using time buckets of transactional data
-want to apportion (the upper bounded) max number of hours that are available to distribute for workers
-+ 8.5 hours for classified positions
-'''
-
-monday_transacs = transacs["Mon"]
-ms_transacs = list(monday_transacs["MS"])
-ms_transacs = ms_transacs[1:len(ms_transacs) - 1]
-print(ms_transacs)
-
-# allocated_hours = apportionment(ms_transacs, MS_mon_workers * 2) # + 8.5 * num_classified["MS"]
-# print(allocated_hours)
+# Performs apportionment for each day and for each location using transactional data
+# Apportions MAX number of half-hours that can be worked at the location
+for day in range(len(workdays)):
+  day_transacs = transacs[workdays[day]]
+  for location in range(len(locations)):
+    location_transacs = list(day_transacs[locations[location]])
+    location_transacs = location_transacs[1:len(location_transacs) - 1]
+    workers = allocated_workers_day[workdays[day]][location]
+    allocated_hours = apportionment(location_transacs, (12 * workers + 16 * num_classified[locations[location]]))
+    print("Location: " + locations[location] + " on " + workdays[day] + "\n" + str(allocated_hours))
