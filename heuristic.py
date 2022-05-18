@@ -138,7 +138,7 @@ for day in range(len(workdays)):
   day_transacs = transacs[workdays[day]]
   operating_hours = hours[workdays[day]]
   for location in range(len(locations)):
-    location_hours = operating_hours[locations[location]]
+    location_hours = list(operating_hours[locations[location]])
     # indicies of locations' open and close times
     idx_open = location_hours.index(True)
     idx_close = len(location_hours) - location_hours[::-1].index(True) - 1
@@ -148,7 +148,7 @@ for day in range(len(workdays)):
     # print("Location: " + locations[location] + str(location_transacs))
     workers = allocated_workers_day[workdays[day]][location]
     allocated_hours = apportionment(location_transacs, (10 * workers + 16 * num_classified[locations[location]]))
-    # print("Location: " + locations[location] + " on " + workdays[day] + "\n" + str(allocated_hours))
+    print("Location: " + locations[location] + " on " + workdays[day] + "\n" + str(allocated_hours))
 
 
 # DECISION VARIABLE CREATION
