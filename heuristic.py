@@ -251,17 +251,18 @@ and the staffing schedule
 Universal constraints:
 *  At least 2 people working at any given time
 '''
-def scheduler(apportionment, num_workers, staff_hrs, classified_amt):
-  # Decision variable creation
+def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
+  model = p.LpProblem(name=lp_name, sense=p.LpMaximize)
 
-    # Regular job decision variables
-  
+  # Decision variable creation
   classified_vars = []
   work_hours = list(compress(BUCKETS, staff_hrs))
   num_buckets = len(work_hours)
   active_workers = [[]] * num_buckets # 2D Array for active workers at a time active_workers[current_time][shift_of_workers]
   dec_var = [] # 2D Array for Decision Vars dec_var[time_shift_start][shift_length]
   for bucket_idx in range(num_buckets): # Goes through the indicies of the possible times that staff can start a shift
+
+    # Regular job decision variables  
     shifts_at_bucket = [] # stores the possible shifts that can be started at the current time bucket
     for shift_idx in range(len(SHIFTS)): # goes through the indicies of the possible shift lengths
       if ((4 + shift_idx + bucket_idx) <= num_buckets): # checks to make sure that the shift is feasible provided the number of time left in the work day
@@ -273,38 +274,60 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt):
         # shifts_at_bucket.append(p.LpVariable(\
         #   name="People starting at " + work_hours[bucket_idx] + " with " + SHIFTS[shift_idx] + " long shift", \
         #   lowBound=0, cat="Integer"))
-
+    
+    # Classified job decision variable
     for classified in range(classified_amt):
       if ((17 + bucket_idx) <= num_buckets): # checks whether the classified position starting at the current time is feasible
         var = p.LpVariable(\
-          name="Classified No. " + str(classified) + " starting at " + work_hours[bucket_idx] + " with 8:30 long shift", \
-          lowBound=0, cat="Integer")
+          name="Start: " + work_hours[bucket_idx], lowBound=0, cat="Integer")
         for work_bucket in range(17): # adds the classified position as an active worker at each appropriate position
           active_workers[bucket_idx + work_bucket].append(var) # work_hours[bucket_idx] + " " + "8:30 CF"
-      classified_vars.append(var) # work_hours[bucket_idx] + " " + "8:30 CF"
+        classified_vars.append(var) # work_hours[bucket_idx] + " " + "8:30 CF"
+    
     dec_var.append(shifts_at_bucket)
 
+  # FOR DEBUGGING
   # for i in range(len(dec_var)):
   #   print(dec_var[i])
-  
-  print(classified)
-
-    # Classified job decision variable
+  # print(classified_vars)
   
   # Objective function
     # max sum of all decision variables
+  obj = p.lpSum(classified_vars)
+  for bucket in dec_var:
+    obj += p.lpSum(bucket)
+  model += obj
 
   # constraint definitions
-    # at least 2 people working at any given time
-      # when num_workers + classified workers > 5, make at least 2 people present, otherwise make at least 1 person present
-    # sum of all classified shifts must equal num classified at location
-    # DUMMY constraint: sum of all decision variables <= allocated workers
-    # the max number of workers at each time bucket is the number in the apportionment data + 2
+  # at least 2 people working at any given time
+    # when num_workers + classified workers > 5, make at least 2 people present, otherwise make at least 1 person present
+  min_workers = 1
+  if num_workers + classified_amt > 5:
+    # make at least 2 people present at each time
+    min_workers = 2
+  
+  for bucket_idx in range(len(active_workers)):
+    model += (p.lpSum(active_workers[bucket_idx]) >= min_workers, "Min workers at " + str(work_hours[bucket_idx]))
+  
+  # sum of all classified shifts must equal num classified at location
+  model += (p.lpSum(classified_vars) <= classified_amt, "Req. amount Classified")
 
+  # DUMMY constraint: sum of all decision variables <= allocated workers
+  model += (obj <= num_workers, "Worker limit")
+
+  # the max number of workers at each time bucket is the number in the apportionment data + 2
+  max_apportionment = [(apportionment[i] + 2) for i in range(len(apportionment))]
+  # print("length of active workers arr: " + str(len(active_workers)))
+  # print("length of apportionment data: " + str(len(max_apportionment)))
+  for bucket_idx in range(len(active_workers)):
+    if bucket_idx != 0 and bucket_idx != (len(active_workers) - 1):
+      model += (p.lpSum(active_workers[bucket_idx]) <= max_apportionment[bucket_idx - 1], "Max workers at " + str(work_hours[bucket_idx]))
+
+  status = model.solve()
 
 '''
 BG, EG, HG, MG should each have 1 classified worker
 
 '''
-
-scheduler(apportionment_data[0][4], allocated_workers_day["Mon"][4], staff_hrs["Mon"]["MS"], num_classified["MS"])
+# print(staff_hrs["Mon"])
+scheduler(apportionment_data[0][4], allocated_workers_day["Mon"][4], staff_hrs["Mon"]["MS"], num_classified["MS"], "MS_Mon")
