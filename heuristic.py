@@ -225,10 +225,10 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
     model += (p.lpSum(active_workers[bucket_idx]) >= min_workers, "Min workers at " + str(work_hours[bucket_idx]))
   
   # sum of all classified shifts must equal num classified at location
-  model += (p.lpSum(classified_vars) <= classified_amt, "Req. amount Classified")
+  model += (p.lpSum(classified_vars) == classified_amt, "Req. amount Classified")
 
   # DUMMY constraint: sum of all decision variables <= allocated workers
-  model += (obj <= num_workers, "Worker limit")
+  model += (obj <= num_workers + classified_amt, "Worker limit")
 
   # the max number of workers at each time bucket is the number in the apportionment data + 2
   max_apportionment = [(apportionment[i] + 2) for i in range(len(apportionment))]
@@ -238,11 +238,28 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
     if bucket_idx != 0 and bucket_idx != (len(active_workers) - 1):
       model += (p.lpSum(active_workers[bucket_idx]) <= max_apportionment[bucket_idx - 1], "Max workers at " + str(work_hours[bucket_idx]))
 
+  # solves the model
   status = model.solve()
+
+  # prints out the resulting decision variables
+  for var in model.variables():
+    print(str(var) + ": " + str(p.value(var)))
+
 
 '''
 BG, EG, HG, MG should each have 1 classified worker
 
 '''
 # print(staff_hrs["Mon"])
+print(allocated_workers_day["Mon"][4])
 scheduler(apportionment_data[0][4], allocated_workers_day["Mon"][4], staff_hrs["Mon"]["MS"], num_classified["MS"], "MS_Mon")
+
+# loop containing the way to solve all LPs
+'''
+for day_idx in range(len(workdays)):
+  weekday = workdays[day_idx]
+  for location_idx in range(len(LOCATIONS)):
+    location = LOCATIONS[location_idx]
+    scheduler(apportionment_data[day_idx][location_idx], allocated_workers_day[weekday][location_idx], \
+      staff_hrs[weekday][location], num_classified[location], location + "_" + weekday)
+'''
