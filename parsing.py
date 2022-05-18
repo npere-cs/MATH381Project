@@ -116,8 +116,9 @@ def parsedData():
     if slice["Date"] != "---" and slice["Date"] != curr_day:
       curr_day = slice["Date"]
       op_days[int(curr_day) % 7] += 1
-    if slice["Day Part"] != "---" and slice["Table Type"] == "---":
-      op_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
+    if slice["Day Part"] != "---" and slice["Table Type"] != "---":
+      if int((slice["Day Part"])[:2]) < 18:
+        op_sum[times.index((slice["Day Part"])[:5])][int(slice["Date"]) % 7] += slice["# Trans"]
   for timeslot in op_sum:
     for day in range(7):
       if op_days[day] > 1:
@@ -387,7 +388,7 @@ def parsedHalfHourData():
   return res
 
 if __name__ == "__main__":
-  #print(parsedData())
+  print(parsedData())
   print(parsedTotals())
   #print(parsedHours())
   #print(parsedStaffing())
