@@ -7,14 +7,14 @@ from itertools import compress
 
 # represents number of FIXED classified positions at location
 num_classified = {
-  "MS": 1,
-  "MG": 0,
-  "PS": 0,
-  "EG": 2,
   "BG": 0,
-  "OP": 0,
+  "EG": 2, # originally 2
   "HG": 0,
-  "OV": 1
+  "MG": 0,
+  "MS": 1, # originally 1
+  "OP": 0,
+  "OV": 1, # originally 1
+  "PS": 0
 }
 
 # represents the number of workers available to us on each day of week at each location
@@ -29,7 +29,7 @@ num_workers = {
 }
 
 # Represents the abbreviated location codes
-LOCATIONS = ["MS", "MG", "PS", "EG", "BG", "OP", "HG", "OV"]
+LOCATIONS = ["BG", "EG", "HG", "MG", "MS", "OP", "OV", "PS"]
 
 # Represent the time intervals at which individual
 BUCKETS = [
@@ -58,7 +58,7 @@ weekdays = list(transacs.keys())
 locations = list(transacs[weekdays[0]].columns[1:9])
 
 hours = parsing.parsedHours()
-print(hours)
+# print(hours)
 staff_hrs = parsing.parsedStaffing()
 
 '''
@@ -102,16 +102,16 @@ def apportionment(data, workers):
         allocation[idx] = math.floor(quotas[idx])
     if iterations % 100 == 0:
       INCREMENT /= 10
-    if iterations == 10000: # DEBUGGING CODE
-      print("OVERFLOW: EXCEEDS REASONABLE NUM ITERATIONS")
-      print("Current allocation: " + str(allocation) + "\nwith sum: " + str(sum(allocation)) \
-        + ", desired sum = " + str(workers))
+    if iterations == 500: # DEBUGGING CODE
+      # print("OVERFLOW: EXCEEDS REASONABLE NUM ITERATIONS")
+      # print("Current allocation: " + str(allocation) + "\nwith sum: " + str(sum(allocation)) \
+      #   + ", desired sum = " + str(workers))
       break
     if (sum(allocation) < workers):
       divisor -= INCREMENT
     else: # (sum(allocation) > workers)
       divisor += INCREMENT
-  print("num iters: " + str(iterations))
+  # print("num iters: " + str(iterations))
   return allocation
 
 # Parsed Transactional Data
@@ -127,28 +127,37 @@ for day in range(len(workdays)):
   workers = num_workers[workdays[day]]
   allocation = apportionment(day_data, workers)
   allocated_workers_day[workdays[day]] = allocation
-  print(workdays[day])
-  print(allocation)
-  print("Allocated: " + str(sum(allocation)) + ", with actual: " + str(num_workers[workdays[day]]))
+  # print(workdays[day])
+  # print(allocation)
+  # print("Allocated: " + str(sum(allocation)) + ", with actual: " + str(num_workers[workdays[day]]))
 
+apportionment_data = [None] * len(workdays) # [day of week][location idx][allocations (different lens)]
 
 # Performs apportionment for each day and for each location using transactional data
 # Apportions MAX number of half-hours that can be worked at the location
 for day in range(len(workdays)):
   day_transacs = transacs[workdays[day]]
   operating_hours = hours[workdays[day]]
-  for location in range(len(locations)):
-    location_hours = list(operating_hours[locations[location]])
+  apportionment_at_location = [None] * len(LOCATIONS) # setting up array of locations
+  for location in range(len(LOCATIONS)):
+    location_hours = list(operating_hours[LOCATIONS[location]])
     # indicies of locations' open and close times
     idx_open = location_hours.index(True)
     idx_close = len(location_hours) - location_hours[::-1].index(True) - 1
-    location_transacs = list(day_transacs[locations[location]])
+    location_transacs = list(day_transacs[LOCATIONS[location]])
 
     location_transacs = location_transacs[idx_open:idx_close + 1]
     # print("Location: " + locations[location] + str(location_transacs))
     workers = allocated_workers_day[workdays[day]][location]
-    allocated_hours = apportionment(location_transacs, (10 * workers + 16 * num_classified[locations[location]]))
-    print("Location: " + locations[location] + " on " + workdays[day] + "\n" + str(allocated_hours))
+    allocated_hours = apportionment(location_transacs, (10 * workers + 17 * num_classified[LOCATIONS[location]]))
+    apportionment_at_location[location] = allocated_hours # saves allocation data to the location
+    # print("Location: " + LOCATIONS[location] + " on " + workdays[day] + "\n" + str(allocated_hours))
+  apportionment_data[day] = apportionment_at_location # saving the day to the apportionment 3D array
+
+# for day in range(len(apportionment_data)):
+#   print(str(workdays[day]) + ": ")
+#   for location in apportionment_data[day]:
+#     print(location)
 
 
 # DECISION VARIABLE CREATION
@@ -234,3 +243,68 @@ MS_mon_model += p.lpSum([dec_var[i][j] for i in range(len(dec_var)) for j in ran
 status = MS_mon_model.solve()
 
 '''
+
+'''
+Determines the work schedules at a particular location provided apportionment data, the number of workers
+and the staffing schedule
+
+Universal constraints:
+*  At least 2 people working at any given time
+'''
+def scheduler(apportionment, num_workers, staff_hrs, classified_amt):
+  # Decision variable creation
+
+    # Regular job decision variables
+  
+  classified_vars = []
+  work_hours = list(compress(BUCKETS, staff_hrs))
+  num_buckets = len(work_hours)
+  active_workers = [[]] * num_buckets # 2D Array for active workers at a time active_workers[current_time][shift_of_workers]
+  dec_var = [] # 2D Array for Decision Vars dec_var[time_shift_start][shift_length]
+  for bucket_idx in range(num_buckets): # Goes through the indicies of the possible times that staff can start a shift
+    shifts_at_bucket = [] # stores the possible shifts that can be started at the current time bucket
+    for shift_idx in range(len(SHIFTS)): # goes through the indicies of the possible shift lengths
+      if ((4 + shift_idx + bucket_idx) <= num_buckets): # checks to make sure that the shift is feasible provided the number of time left in the work day
+        var = p.LpVariable(\
+          name="Start: " + work_hours[bucket_idx] + " Shift: " + SHIFTS[shift_idx], lowBound=0, cat="Integer")
+        for work_bucket in range(4 + shift_idx): # this loop fills in when workers are actively working
+          active_workers[bucket_idx + work_bucket].append(var) # work_hours[bucket_idx] + " " + SHIFTS[shift_idx]
+        shifts_at_bucket.append(var) # work_hours[bucket_idx] + " " + SHIFTS[shift_idx]
+        # shifts_at_bucket.append(p.LpVariable(\
+        #   name="People starting at " + work_hours[bucket_idx] + " with " + SHIFTS[shift_idx] + " long shift", \
+        #   lowBound=0, cat="Integer"))
+
+    for classified in range(classified_amt):
+      if ((17 + bucket_idx) <= num_buckets): # checks whether the classified position starting at the current time is feasible
+        var = p.LpVariable(\
+          name="Classified No. " + str(classified) + " starting at " + work_hours[bucket_idx] + " with 8:30 long shift", \
+          lowBound=0, cat="Integer")
+        for work_bucket in range(17): # adds the classified position as an active worker at each appropriate position
+          active_workers[bucket_idx + work_bucket].append(var) # work_hours[bucket_idx] + " " + "8:30 CF"
+      classified_vars.append(var) # work_hours[bucket_idx] + " " + "8:30 CF"
+    dec_var.append(shifts_at_bucket)
+
+  # for i in range(len(dec_var)):
+  #   print(dec_var[i])
+  
+  print(classified)
+
+    # Classified job decision variable
+  
+  # Objective function
+    # max sum of all decision variables
+
+  # constraint definitions
+    # at least 2 people working at any given time
+      # when num_workers + classified workers > 5, make at least 2 people present, otherwise make at least 1 person present
+    # sum of all classified shifts must equal num classified at location
+    # DUMMY constraint: sum of all decision variables <= allocated workers
+    # the max number of workers at each time bucket is the number in the apportionment data + 2
+
+
+'''
+BG, EG, HG, MG should each have 1 classified worker
+
+'''
+
+scheduler(apportionment_data[0][4], allocated_workers_day["Mon"][4], staff_hrs["Mon"]["MS"], num_classified["MS"])
