@@ -5,39 +5,6 @@ import parsing
 import math
 from itertools import compress
 
-# model = p.LpProblem(name="Heuristic", sense=p.LpMinimize)
-
-# x = []
-# for i in range(0, 24):
-#   if (i < 10):
-#     x.append(LpVariable(name="x0"+str(i), lowBound=0, cat="Integer"))
-#   else:
-#     x.append(LpVariable(name="x"+str(i), lowBound=0, cat="Integer"))
-# for i in range(0, 6):
-#   model += (x[i] + x[i-1] + x[i-2] + x[i-3] + x[i-5] + x[i-6] + x[i-7] + x[i-8] >= 2, str(i)+":00")
-# for i in range(6, 10):
-#   model += (x[i] + x[i-1] + x[i-2] + x[i-3] + x[i-5] + x[i-6] + x[i-7] + x[i-8] >= 8, str(i)+":00")
-# for i in range(10, 12):
-#   model += (x[i] + x[i-1] + x[i-2] + x[i-3] + x[i-5] + x[i-6] + x[i-7] + x[i-8] >= 4, str(i)+":00")
-# for i in range(12, 16):
-#   model += (x[i] + x[i-1] + x[i-2] + x[i-3] + x[i-5] + x[i-6] + x[i-7] + x[i-8] >= 3, str(i)+":00")
-# for i in range(16, 18):
-#   model += (x[i] + x[i-1] + x[i-2] + x[i-3] + x[i-5] + x[i-6] + x[i-7] + x[i-8] >= 6, str(i)+":00")
-# for i in range(18, 22):
-#   model += (x[i] + x[i-1] + x[i-2] + x[i-3] + x[i-5] + x[i-6] + x[i-7] + x[i-8] >= 5, str(i)+":00")
-# for i in range(22, 24):
-#   model += (x[i] + x[i-1] + x[i-2] + x[i-3] + x[i-5] + x[i-6] + x[i-7] + x[i-8] >= 3, str(i)+":00")
-# model += lpSum(sum(x))
-# status = model.solve()
-# print(model)
-# print(f"status: {model.status}, {LpStatus[model.status]}")
-# print(f"objective: {model.objective.value()}")
-# for var in model.variables():
-#   print(f"{var.name}: {var.value()}")
-# print()
-# for name, constraint in model.constraints.items():
-#   print(f"{name}: {constraint.value()}")
-
 # represents number of FIXED classified positions at location
 num_classified = {
   "MS": 1,
@@ -62,7 +29,7 @@ num_workers = {
 }
 
 # Represents the abbreviated location codes
-LOCATIONS = ["ms", "mg", "ps", "eg", "bg", "op", "hg", "ov"]
+LOCATIONS = ["MS", "MG", "PS", "EG", "BG", "OP", "HG", "OV"]
 
 # Represent the time intervals at which individual
 BUCKETS = [
@@ -91,7 +58,98 @@ weekdays = list(transacs.keys())
 locations = list(transacs[weekdays[0]].columns[1:9])
 
 hours = parsing.parsedHours()
+print(hours)
 staff_hrs = parsing.parsedStaffing()
+
+'''
+Apportionment problem:
+for each day of the week:
+ - take the total of all average transactions
+ - divide by total number of workers provided for that day (? include CLASSIFIED)
+ - this will give us STD DIVISOR
+
+ - divide each location's average transactions and divide by STD DIVISOR to get QUOTA
+ - lower quota: n = Math.floor(QUOTA)
+ - geometric mean: sqrt(n * (n + 1))
+ - get the initial allocation thru sum of all:
+ - if quota > geom mean, Math.ceil(QUOTA)
+ - if quota < geom mean, Math.floor(QUOTA)
+
+ - if initial allocation < number of workers decrease the divisor
+ - if initial allocation > number of workers increase the divisor
+'''
+
+'''
+Function that accepts average transactional data for different locations at a particular day,
+as well as the total number of workers available to apportion during that day. Returns a list
+of the number of workers to allocate to each location
+'''
+def apportionment(data, workers):
+  INCREMENT = 0.1
+  allocation = [0] * len(data)
+  divisor = sum(data) / workers
+  quotas = [0] * len(data)
+  iterations = 0
+  while (sum(allocation) != workers):
+    iterations += 1
+    for idx in range(len(data)):
+      quotas[idx] = data[idx] / divisor
+      lower_quota = math.floor(quotas[idx])
+      geom_mean = math.sqrt(lower_quota * (lower_quota + 1))
+      if quotas[idx] > geom_mean:
+        allocation[idx] = math.ceil(quotas[idx])
+      else:
+        allocation[idx] = math.floor(quotas[idx])
+    if iterations % 100 == 0:
+      INCREMENT /= 10
+    if iterations == 10000: # DEBUGGING CODE
+      print("OVERFLOW: EXCEEDS REASONABLE NUM ITERATIONS")
+      print("Current allocation: " + str(allocation) + "\nwith sum: " + str(sum(allocation)) \
+        + ", desired sum = " + str(workers))
+      break
+    if (sum(allocation) < workers):
+      divisor -= INCREMENT
+    else: # (sum(allocation) > workers)
+      divisor += INCREMENT
+  print("num iters: " + str(iterations))
+  return allocation
+
+# Parsed Transactional Data
+data = parsing.parsedTotals()
+workdays = weekdays[0:5]
+
+# Dictionary that stores the key: value pair as DAY: ALLOCATIONS
+allocated_workers_day = {}
+
+# Determines the allocation of individual workers to each location on each day
+for day in range(len(workdays)):
+  day_data = list(data.iloc[day])[1:9]
+  workers = num_workers[workdays[day]]
+  allocation = apportionment(day_data, workers)
+  allocated_workers_day[workdays[day]] = allocation
+  print(workdays[day])
+  print(allocation)
+  print("Allocated: " + str(sum(allocation)) + ", with actual: " + str(num_workers[workdays[day]]))
+
+
+# Performs apportionment for each day and for each location using transactional data
+# Apportions MAX number of half-hours that can be worked at the location
+for day in range(len(workdays)):
+  day_transacs = transacs[workdays[day]]
+  operating_hours = hours[workdays[day]]
+  for location in range(len(locations)):
+    location_hours = operating_hours[locations[location]]
+    # indicies of locations' open and close times
+    idx_open = location_hours.index(True)
+    idx_close = len(location_hours) - location_hours[::-1].index(True) - 1
+    location_transacs = list(day_transacs[locations[location]])
+
+    location_transacs = location_transacs[idx_open:idx_close + 1]
+    # print("Location: " + locations[location] + str(location_transacs))
+    workers = allocated_workers_day[workdays[day]][location]
+    allocated_hours = apportionment(location_transacs, (10 * workers + 16 * num_classified[locations[location]]))
+    # print("Location: " + locations[location] + " on " + workdays[day] + "\n" + str(allocated_hours))
+
 
 # DECISION VARIABLE CREATION
 
@@ -176,89 +234,3 @@ MS_mon_model += p.lpSum([dec_var[i][j] for i in range(len(dec_var)) for j in ran
 status = MS_mon_model.solve()
 
 '''
-
-
-
-'''
-Apportionment problem:
-for each day of the week:
- - take the total of all average transactions
- - divide by total number of workers provided for that day (? include CLASSIFIED)
- - this will give us STD DIVISOR
-
- - divide each location's average transactions and divide by STD DIVISOR to get QUOTA
- - lower quota: n = Math.floor(QUOTA)
- - geometric mean: sqrt(n * (n + 1))
- - get the initial allocation thru sum of all:
- - if quota > geom mean, Math.ceil(QUOTA)
- - if quota < geom mean, Math.floor(QUOTA)
-
- - if initial allocation < number of workers decrease the divisor
- - if initial allocation > number of workers increase the divisor
-
-
-'''
-
-'''
-Function that accepts average transactional data for different locations at a particular day,
-as well as the total number of workers available to apportion during that day. Returns a list
-of the number of workers to allocate to each location
-'''
-def apportionment(data, workers):
-  INCREMENT = 0.1
-  allocation = [0] * len(data)
-  divisor = sum(data) / workers
-  quotas = [0] * len(data)
-  iterations = 0
-  while (sum(allocation) != workers):
-    iterations += 1
-    for idx in range(len(data)):
-      quotas[idx] = data[idx] / divisor
-      lower_quota = math.floor(quotas[idx])
-      geom_mean = math.sqrt(lower_quota * (lower_quota + 1))
-      if quotas[idx] > geom_mean:
-        allocation[idx] = math.ceil(quotas[idx])
-      else:
-        allocation[idx] = math.floor(quotas[idx])
-    if iterations % 100 == 0:
-      INCREMENT /= 10
-    if iterations == 10000: # DEBUGGING CODE
-      print("OVERFLOW: EXCEEDS REASONABLE NUM ITERATIONS")
-      print("Current allocation: " + str(allocation) + "\nwith sum: " + str(sum(allocation)) \
-        + ", desired sum = " + str(workers))
-      break
-    if (sum(allocation) < workers):
-      divisor -= INCREMENT
-    else: # (sum(allocation) > workers)
-      divisor += INCREMENT
-  print("num iters: " + str(iterations))
-  return allocation
-
-# Parsed Transactional Data
-data = parsing.parsedTotals()
-workdays = weekdays[0:5]
-
-# Dictionary that stores the key: value pair as DAY: ALLOCATIONS
-allocated_workers_day = {}
-
-# Determines the allocation of individual workers to each location on each day
-for day in range(len(workdays)):
-  day_data = list(data.iloc[day])[1:9]
-  workers = num_workers[workdays[day]]
-  allocation = apportionment(day_data, workers)
-  allocated_workers_day[workdays[day]] = allocation
-  print(workdays[day])
-  print(allocation)
-  print("Allocated: " + str(sum(allocation)) + ", with actual: " + str(num_workers[workdays[day]]))
-
-
-# Performs apportionment for each day and for each location using transactional data
-# Apportions MAX number of half-hours that can be worked at the location
-for day in range(len(workdays)):
-  day_transacs = transacs[workdays[day]]
-  for location in range(len(locations)):
-    location_transacs = list(day_transacs[locations[location]])
-    location_transacs = location_transacs[1:len(location_transacs) - 1]
-    workers = allocated_workers_day[workdays[day]][location]
-    allocated_hours = apportionment(location_transacs, (12 * workers + 16 * num_classified[locations[location]]))
-    print("Location: " + locations[location] + " on " + workdays[day] + "\n" + str(allocated_hours))
