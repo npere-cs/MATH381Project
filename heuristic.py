@@ -8,13 +8,13 @@ from itertools import compress
 # represents number of FIXED classified positions at location
 num_classified = {
   "BG": 0,
-  "EG": 2, # originally 2
+  "EG": 1, # originally 2
   "HG": 0,
   "MG": 0,
   "MS": 1, # originally 1
   "OP": 0,
   "OV": 1, # originally 1
-  "PS": 0
+  "PS": 1
 }
 
 # represents the number of workers available to us on each day of week at each location
@@ -248,27 +248,28 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
 
   # solves the model
   status = model.solve()
-
+  print(status)
+'''
   # prints out the resulting decision variables
   for var in model.variables():
     print(str(var) + ": " + str(p.value(var)))
   for name, constraint in model.constraints.items():
     print(f"{name}: {constraint.value()}")
-
+'''
 '''
 BG, EG, HG, MG should each have 1 classified worker
 
 '''
 # print(staff_hrs["Mon"])
-print(allocated_workers_day["Mon"][4])
-scheduler(apportionment_data[0][4], allocated_workers_day["Mon"][4], staff_hrs["Mon"]["MS"], num_classified["MS"], "MS_Mon")
+# print(allocated_workers_day["Mon"][4])
+# scheduler(apportionment_data[0][4], allocated_workers_day["Mon"][4], staff_hrs["Mon"]["MS"], num_classified["MS"], "MS_Mon")
 
 # loop containing the way to solve all LPs
-'''
 for day_idx in range(len(workdays)):
   weekday = workdays[day_idx]
+  print(weekday)
   for location_idx in range(len(LOCATIONS)):
     location = LOCATIONS[location_idx]
+    print(location)
     scheduler(apportionment_data[day_idx][location_idx], allocated_workers_day[weekday][location_idx], \
       staff_hrs[weekday][location], num_classified[location], location + "_" + weekday)
-'''
