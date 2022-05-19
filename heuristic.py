@@ -227,7 +227,6 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
     min_workers = 2
 
   for bucket_idx in range(len(active_workers)):
-    print(active_workers[bucket_idx])
     constraint = (p.lpSum(active_workers[bucket_idx]) >= min_workers, "Min workers at " + str(work_hours[bucket_idx]))
     model += constraint
 
