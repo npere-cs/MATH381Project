@@ -107,6 +107,9 @@ Function that accepts average transactional data for different locations at a pa
 as well as the total number of workers available to apportion during that day. Returns a list
 of the number of workers to allocate to each location
 
+Code is a slightly modified version of:
+https://theuforce.blogspot.com/2010/12/python-huntington-hill-method.html
+
 This function generates the same results as the first apportionment function, but this is more
 clear as to what is going on (the formula can be nicely inferred from this function [see wiki])
 https://en.wikipedia.org/wiki/Huntington%E2%80%93Hill_method
@@ -115,14 +118,14 @@ https://en.wikipedia.org/wiki/United_States_congressional_apportionment#The_meth
 def apportionment2(data, workers):
   num_locations = len(data)
   allocation = [1] * num_locations
-  std_divs = [math.sqrt(2)] * num_locations
+  geom_means = [math.sqrt(2)] * num_locations
   for i in range(num_locations, workers):
     max = 0
     for location in range(1, num_locations):
-      if (data[location]/std_divs[location]) > (data[max] / std_divs[max]):
+      if (data[location] / geom_means[location]) > (data[max] / geom_means[max]):
         max = location
     allocation[max] +=  1    
-    std_divs[max]=math.sqrt(allocation[max] * (allocation[max]+1))
+    geom_means[max] = math.sqrt(allocation[max] * (allocation[max] + 1))
   return allocation
 
 # Parsed Transactional Data
