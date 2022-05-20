@@ -4,6 +4,7 @@ import pulp as p
 import parsing
 import math
 from itertools import compress
+from voting import apportionment as app
 
 # represents number of FIXED classified positions at location
 num_classified = {
@@ -115,6 +116,29 @@ def apportionment(data, workers):
   # print("num iters: " + str(iterations))
   return allocation
 
+'''
+Function that accepts average transactional data for different locations at a particular day,
+as well as the total number of workers available to apportion during that day. Returns a list
+of the number of workers to allocate to each location
+
+This function generates the same results as the first apportionment function, but this is more
+clear as to what is going on (the formula can be nicely inferred from this function [see wiki])
+https://en.wikipedia.org/wiki/Huntington%E2%80%93Hill_method
+https://en.wikipedia.org/wiki/United_States_congressional_apportionment#The_method_of_equal_proportions
+'''
+def apportionment2(data, workers):
+  num_locations = len(data)
+  allocation = [1] * num_locations
+  std_divs = [math.sqrt(2)] * num_locations
+  for i in range(num_locations, workers):
+    max = 0
+    for location in range(1, num_locations):
+      if (data[location]/std_divs[location]) > (data[max] / std_divs[max]):
+        max = location
+    allocation[max] +=  1    
+    std_divs[max]=math.sqrt(allocation[max] * (allocation[max]+1))
+  return allocation
+
 # Parsed Transactional Data
 data = parsing.parsedTotals()
 workdays = weekdays[0:5]
@@ -126,7 +150,10 @@ allocated_workers_day = {}
 for day in range(len(workdays)):
   day_data = list(data.iloc[day])[1:9]
   workers = num_workers[workdays[day]]
-  allocation = apportionment(day_data, workers)
+  # All 3 apportionment methods give the same results here
+  # allocation = apportionment(day_data, workers)
+  # allocation = apportionment2(day_data, workers)
+  allocation = app.huntington_hill(day_data, workers)
   allocated_workers_day[workdays[day]] = allocation
   # print(workdays[day])
   # print(allocation)
@@ -150,7 +177,10 @@ for day in range(len(workdays)):
     location_transacs = location_transacs[idx_open:idx_close + 1]
     # print("Location: " + locations[location] + str(location_transacs))
     workers = allocated_workers_day[workdays[day]][location]
+    # The apportionment methods below give some small variation in result between each other
     allocated_hours = apportionment(location_transacs, (10 * workers + 17 * num_classified[LOCATIONS[location]]))
+    # allocated_hours = apportionment2(location_transacs, (10 * workers + 17 * num_classified[LOCATIONS[location]]))
+    # allocated_hours = app.huntington_hill(location_transacs, (10 * workers + 17 * num_classified[LOCATIONS[location]]))
     apportionment_at_location[location] = allocated_hours # saves allocation data to the location
     # print("Location: " + LOCATIONS[location] + " on " + workdays[day] + "\n" + str(allocated_hours))
   apportionment_data[day] = apportionment_at_location # saving the day to the apportionment 3D array
