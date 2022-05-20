@@ -31,10 +31,20 @@ The goal of this project is to produce a balanced schedule of employee shifts ac
 ## Contents
 
 ### Data
-Contains the relevant data used to obtain the optimal schedules.
+Contains the relevant data used to obtain the optimal schedules. In particular, it has the data sets of transactional data at each location
+obtained over a period of roughly 2 months.
+
+### Graphs
+Contains the histograms of average transactional data at each location on each day, see the [notation section](##-Schedules) to interpret the schedules.
+
+### Schedules
+Contains the optimal schedules at each location on each day of the week in plain text.
 
 ### Program Files
 Contains the python program that encodes the mathematical model.
+*  `parsing.py` - contains data processing for the data sets
+*  `histograms.py` - contains program to generate histograms of average transactional data
+*  `model.py` - contains the model used to determine the optimal schedules
 
 <hr>
 
@@ -51,11 +61,19 @@ Below are the definitions for the various notation that is found as part of the 
 *  Husky Grind - "HG"
 *  Overpass Espresso - "OV"
 
+## Schedules
+Have the following format: `Start: HH:MM Shift: H:MM: X`
+*  `Start: HH:MM` - Time of day that the shift starts
+*  `Shift: H:MM` - Length of the shift
+*  `X` - Number of employees starting at that time with the partiuclar shift length
+
+
 ## References
 
 ## Acknowledgements
 *  Jon Biltucci - Assistant Director, Retail Dining UW HFS
 *  Sara Billey - Professor of Mathematics at the University of Washington
+*  Vasily Ilin - UW Dept. of Mathematics Graduate Student &amp; Teaching Assistant
 *  University of Washington Housing &amp; Food Services
 *  University of Washington Department of Mathematics
 
