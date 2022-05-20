@@ -1,13 +1,12 @@
-import numpy as np
-# from pulp import LpMinimize, LpProblem, LpStatus, lpSum, LpVariable
-import pulp as p
-import parsing
 import math
+import numpy as np
+import pulp as p
 from itertools import compress
 from voting import apportionment as app
+import parsing # contains the parsed data
 
 # represents number of FIXED classified positions at location
-num_classified = {
+NUM_CLASSIFIED = {
   "BG": 0,
   "EG": 1, # originally 2
   "HG": 0,
@@ -19,7 +18,7 @@ num_classified = {
 }
 
 # represents the number of workers available to us on each day of week at each location
-num_workers = {
+NUM_WORKERS = {
   "Mon": 44,
   "Tue": 43,
   "Wed": 42,
@@ -41,12 +40,6 @@ BUCKETS = [
   "16:30", "17:00", "17:30", "18:00", "18:30"
 ]
 
-'''
-Shift lengths:
-2 hrs, 2:30 hrs, 3 hrs, 3:30 hrs, 4 hrs, 4:30 hrs, 5 hrs
-Classified (FIXED):
-8:30 hrs
-'''
 # Represents the possible shift lengths employees can take on
 SHIFTS = ["2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00"]
 SCORES = [3, 3, 4, 5, 3, 3, 2]
@@ -54,34 +47,25 @@ SCORES = [3, 3, 4, 5, 3, 3, 2]
 # dictionary containing the transactional data for each day of the week at each location
 # for each 30 minute interval
 transacs = parsing.parsedHalfHourData()
+
 # days of the week
 weekdays = list(transacs.keys())
+
 # locations
 locations = list(transacs[weekdays[0]].columns[1:9])
 
+# contains dictionary of dataframes that have TRUE/FALSE for each possible time bucket of
+# operation at each location
 hours = parsing.parsedHours()
-# print(hours)
+
+# contains dictionary of dataframes that have TRUE/FALSE for each possible time bucket of
+# scheduled staff hours at each location
 staff_hrs = parsing.parsedStaffing()
 
 '''
-Apportionment problem:
-for each day of the week:
- - take the total of all average transactions
- - divide by total number of workers provided for that day (? include CLASSIFIED)
- - this will give us STD DIVISOR
+OLD APPORTIONMENT FUNCTION
+(does not as nicely represent the formula found on wiki [see apportionment2 function])
 
- - divide each location's average transactions and divide by STD DIVISOR to get QUOTA
- - lower quota: n = Math.floor(QUOTA)
- - geometric mean: sqrt(n * (n + 1))
- - get the initial allocation thru sum of all:
- - if quota > geom mean, Math.ceil(QUOTA)
- - if quota < geom mean, Math.floor(QUOTA)
-
- - if initial allocation < number of workers decrease the divisor
- - if initial allocation > number of workers increase the divisor
-'''
-
-'''
 Function that accepts average transactional data for different locations at a particular day,
 as well as the total number of workers available to apportion during that day. Returns a list
 of the number of workers to allocate to each location
@@ -104,7 +88,8 @@ def apportionment(data, workers):
         allocation[idx] = math.floor(quotas[idx])
     if iterations % 100 == 0:
       INCREMENT /= 10
-    if iterations == 500: # DEBUGGING CODE
+    if iterations == 500:
+      # DEBUGGING CODE - prints whether the current apportionment has not converged
       # print("OVERFLOW: EXCEEDS REASONABLE NUM ITERATIONS")
       # print("Current allocation: " + str(allocation) + "\nwith sum: " + str(sum(allocation)) \
       #   + ", desired sum = " + str(workers))
@@ -113,7 +98,8 @@ def apportionment(data, workers):
       divisor -= INCREMENT
     else: # (sum(allocation) > workers)
       divisor += INCREMENT
-  # print("num iters: " + str(iterations))
+  # print("num iters: " + str(iterations)) # DEBUGGING
+
   return allocation
 
 '''
@@ -149,15 +135,16 @@ allocated_workers_day = {}
 # Determines the allocation of individual workers to each location on each day
 for day in range(len(workdays)):
   day_data = list(data.iloc[day])[1:9]
-  workers = num_workers[workdays[day]]
+  workers = NUM_WORKERS[workdays[day]]
   # All 3 apportionment methods give the same results here
-  # allocation = apportionment(day_data, workers)
+  allocation = apportionment(day_data, workers)
   # allocation = apportionment2(day_data, workers)
-  allocation = app.huntington_hill(day_data, workers)
+  # allocation = app.huntington_hill(day_data, workers)
   allocated_workers_day[workdays[day]] = allocation
+  # DEBUGGING CODE - prints out the allocations
   # print(workdays[day])
   # print(allocation)
-  # print("Allocated: " + str(sum(allocation)) + ", with actual: " + str(num_workers[workdays[day]]))
+  # print("Allocated: " + str(sum(allocation)) + ", with actual: " + str(NUM_WORKERS[workdays[day]]))
 
 apportionment_data = [None] * len(workdays) # [day of week][location idx][allocations (different lens)]
 
@@ -173,18 +160,20 @@ for day in range(len(workdays)):
     idx_open = location_hours.index(True)
     idx_close = len(location_hours) - location_hours[::-1].index(True) - 1
     location_transacs = list(day_transacs[LOCATIONS[location]])
-
     location_transacs = location_transacs[idx_open:idx_close + 1]
-    # print("Location: " + locations[location] + str(location_transacs))
+    # print("Location: " + locations[location] + str(location_transacs)) # DEBUGGING
     workers = allocated_workers_day[workdays[day]][location]
+
     # The apportionment methods below give some small variation in result between each other
-    allocated_hours = apportionment(location_transacs, (10 * workers + 17 * num_classified[LOCATIONS[location]]))
-    # allocated_hours = apportionment2(location_transacs, (10 * workers + 17 * num_classified[LOCATIONS[location]]))
-    # allocated_hours = app.huntington_hill(location_transacs, (10 * workers + 17 * num_classified[LOCATIONS[location]]))
+    allocated_hours = apportionment(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
+    # allocated_hours = apportionment2(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
+    # allocated_hours = app.huntington_hill(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
     apportionment_at_location[location] = allocated_hours # saves allocation data to the location
-    # print("Location: " + LOCATIONS[location] + " on " + workdays[day] + "\n" + str(allocated_hours))
+    # print("Location: " + LOCATIONS[location] + " on " + workdays[day] + "\n" + str(allocated_hours)) # DEBUGGING
+
   apportionment_data[day] = apportionment_at_location # saving the day to the apportionment 3D array
 
+# DEBUGGING CODE
 # for day in range(len(apportionment_data)):
 #   print(str(workdays[day]) + ": ")
 #   for location in apportionment_data[day]:
@@ -232,24 +221,23 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
         for work_bucket in range(17): # adds the classified position as an active worker at each appropriate position
           active_workers[bucket_idx + work_bucket].append(var) # work_hours[bucket_idx] + " " + "8:30 CF"\
         classified_vars.append(var) # work_hours[bucket_idx] + " " + "8:30 CF"
-
     dec_var.append(shifts_at_bucket)
     shift_scores.append(scores_at_bucket)
+  
   # FOR DEBUGGING
   # for i in range(len(dec_var)):
   #   print(dec_var[i])
   # print(classified_vars)
 
-  # Objective function
-    # max sum of all decision variables
+  # Objective function - max sum of all decision variables
   obj = p.lpSum(classified_vars)
   for i in range(len(dec_var)):
     obj += p.lpSum(np.dot(dec_var[i], shift_scores[i]))
   model += obj
 
   # constraint definitions
-  # at least 2 people working at any given time
-    # when num_workers + classified workers > 5, make at least 2 people present, otherwise make at least 1 person present
+  # *  at least 2 people working at any given time
+  # *  when num_workers + classified workers > 5, make at least 2 people present, otherwise make at least 1 person present
   min_workers = 1
   if num_workers + classified_amt > 5:
     # make at least 2 people present at each time
@@ -261,12 +249,12 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
 
   # increase minimum number of working for a given timeslot based on the timeslot's demand
   min_apportionment = [(apportionment[i] / 2) for i in range(len(apportionment))]
+  # DEBUGGING CODE
   # print("length of active workers arr: " + str(len(active_workers)))
   # print("length of apportionment data: " + str(len(max_apportionment)))
   for bucket_idx in range(len(active_workers)):
     if bucket_idx != 0 and bucket_idx != (len(active_workers) - 1):
       model += (p.lpSum(active_workers[bucket_idx]) >= min_apportionment[bucket_idx - 1], "Rec. min workers at " + str(work_hours[bucket_idx]))
-
   # sum of all classified shifts must equal num classified at location
   model += (p.lpSum(classified_vars) == classified_amt, "Req. amount Classified")
 
@@ -279,16 +267,17 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
   # solves the model
   status = model.solve()
   print(status)
-  # prints out the resulting decision variables
+  # prints out the resulting decision variables FOR DEBUGGING
   # for var in model.variables():
   #   print(str(var) + ": " + str(p.value(var)))
   # for name, constraint in model.constraints.items():
   #   print(f"{name}: {constraint.value()}")
   return model
 
+# SMALL TEST CASE FOR DEBUGGING
 # print(staff_hrs["Mon"])
 # print(allocated_workers_day["Mon"][4])
-# scheduler(apportionment_data[0][4], allocated_workers_day["Mon"][4], staff_hrs["Mon"]["MS"], num_classified["MS"], "MS_Mon")
+# scheduler(apportionment_data[0][4], allocated_workers_day["Mon"][4], staff_hrs["Mon"]["MS"], NUM_CLASSIFIED["MS"], "MS_Mon")
 
 # loop containing the way to solve all LPs
 for day_idx in range(len(workdays)):
@@ -298,7 +287,7 @@ for day_idx in range(len(workdays)):
     location = LOCATIONS[location_idx]
     print(location)
     model = scheduler(apportionment_data[day_idx][location_idx], allocated_workers_day[weekday][location_idx], \
-      staff_hrs[weekday][location], num_classified[location], location + "_" + weekday)
+      staff_hrs[weekday][location], NUM_CLASSIFIED[location], location + "_" + weekday)
     f = open(location + "_" + weekday + ".txt", "w")
     for var in model.variables():
       f.write(str(var) + ": " + str(p.value(var)) + "\n")
