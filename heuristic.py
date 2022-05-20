@@ -48,6 +48,7 @@ Classified (FIXED):
 '''
 # Represents the possible shift lengths employees can take on
 SHIFTS = ["2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00"]
+SCORES = [3, 3, 4, 5, 3, 3, 2]
 
 # dictionary containing the transactional data for each day of the week at each location
 # for each 30 minute interval
@@ -175,7 +176,6 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
   num_buckets = len(work_hours)
   active_workers = [[] for i in range(num_buckets)] # 2D Array for active workers at a time active_workers[current_time][shift_of_workers]
   shift_scores = [] # 2D Array to favor shifts closer to 3.5 hours
-  scores = [3, 3, 4, 5, 3, 3, 2]
   dec_var = [] # 2D Array for Decision Vars dec_var[time_shift_start][shift_length]
 
   for bucket_idx in range(num_buckets): # Goes through the indicies of the possible times that staff can start a shift
@@ -189,7 +189,7 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
         for work_bucket in range(4 + shift_idx): # this loop fills in when workers are actively working
           active_workers[bucket_idx + work_bucket].append(var)
         shifts_at_bucket.append(var) # work_hours[bucket_idx] + " " + SHIFTS[shift_idx]
-        scores_at_bucket.append(scores[shift_idx])
+        scores_at_bucket.append(SCORES[shift_idx])
         # shifts_at_bucket.append(p.LpVariable(\
         #   name="People starting at " + work_hours[bucket_idx] + " with " + SHIFTS[shift_idx] + " long shift", \
         #   lowBound=0, cat="Integer"))
@@ -213,8 +213,9 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
   # Objective function
     # max sum of all decision variables
   obj = p.lpSum(classified_vars)
-  for bucket in dec_var:
-    obj += p.lpSum(bucket)
+  for i in range(len(dec_var)):
+    obj += p.lpSum(np.dot(dec_var[i], shift_scores[i]))
+  model += obj
 
   # constraint definitions
   # at least 2 people working at any given time
@@ -228,13 +229,7 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
     constraint = (p.lpSum(active_workers[bucket_idx]) >= min_workers, "Min workers at " + str(work_hours[bucket_idx]))
     model += constraint
 
-  # sum of all classified shifts must equal num classified at location
-  model += (p.lpSum(classified_vars) == classified_amt, "Req. amount Classified")
-
-  # DUMMY constraint: sum of all decision variables <= allocated workers
-  model += (obj == num_workers + classified_amt, "Worker limit")
-
-  # the max number of workers at each time bucket is the number in the apportionment data + 2
+  # increase minimum number of working for a given timeslot based on the timeslot's demand
   min_apportionment = [(apportionment[i] / 2) for i in range(len(apportionment))]
   # print("length of active workers arr: " + str(len(active_workers)))
   # print("length of apportionment data: " + str(len(max_apportionment)))
@@ -242,10 +237,14 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
     if bucket_idx != 0 and bucket_idx != (len(active_workers) - 1):
       model += (p.lpSum(active_workers[bucket_idx]) >= min_apportionment[bucket_idx - 1], "Rec. min workers at " + str(work_hours[bucket_idx]))
 
-  obj = p.lpSum(classified_vars)
-  for i in range(len(dec_var)):
-    obj += p.lpSum(np.dot(dec_var[i], shift_scores[i]))
-  model += obj
+  # sum of all classified shifts must equal num classified at location
+  model += (p.lpSum(classified_vars) == classified_amt, "Req. amount Classified")
+
+  # sum of all decision variables must equal allocated workers at location
+  all_workers = p.lpSum(classified_vars)
+  for bucket in dec_var:
+    all_workers += p.lpSum(bucket)
+  model += (all_workers == num_workers + classified_amt, "Worker limit")
 
   # solves the model
   status = model.solve()
@@ -257,10 +256,6 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
   #   print(f"{name}: {constraint.value()}")
   return model
 
-'''
-BG, EG, HG, MG should each have 1 classified worker
-
-'''
 # print(staff_hrs["Mon"])
 # print(allocated_workers_day["Mon"][4])
 # scheduler(apportionment_data[0][4], allocated_workers_day["Mon"][4], staff_hrs["Mon"]["MS"], num_classified["MS"], "MS_Mon")
