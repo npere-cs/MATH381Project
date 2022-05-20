@@ -35,7 +35,7 @@ Contains the relevant data used to obtain the optimal schedules. In particular, 
 obtained over a period of roughly 2 months.
 
 ### Graphs
-Contains the histograms of average transactional data at each location on each day, see the [notation section](##-Schedules) to interpret the schedules.
+Contains the histograms of average transactional data at each location on each day, see the [notation section](###-Schedules) to interpret the schedules.
 
 ### Schedules
 Contains the optimal schedules at each location on each day of the week in plain text.
@@ -61,7 +61,7 @@ Below are the definitions for the various notation that is found as part of the 
 *  Husky Grind - "HG"
 *  Overpass Espresso - "OV"
 
-## Schedules
+### Schedules
 Have the following format: `Start: HH:MM Shift: H:MM: X`
 *  `Start: HH:MM` - Time of day that the shift starts
 *  `Shift: H:MM` - Length of the shift
