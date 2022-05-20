@@ -35,7 +35,7 @@ Contains the relevant data used to obtain the optimal schedules. In particular, 
 obtained over a period of roughly 2 months.
 
 ### Graphs
-Contains the histograms of average transactional data at each location on each day, see the [notation section](###-Schedules) to interpret the schedules.
+Contains the histograms of average transactional data at each location on each day, see the [notation section](#schedules-1) to interpret the schedules.
 
 ### Schedules
 Contains the optimal schedules at each location on each day of the week in plain text.
