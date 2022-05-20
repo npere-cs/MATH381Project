@@ -174,22 +174,22 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
   work_hours = list(compress(BUCKETS, staff_hrs))
   num_buckets = len(work_hours)
   active_workers = [[] for i in range(num_buckets)] # 2D Array for active workers at a time active_workers[current_time][shift_of_workers]
-  active_workers_strings = [[] for i in range(num_buckets)]
+  shift_scores = [] # 2D Array to favor shifts closer to 3.5 hours
+  scores = [3, 3, 4, 5, 3, 3, 2]
   dec_var = [] # 2D Array for Decision Vars dec_var[time_shift_start][shift_length]
 
   for bucket_idx in range(num_buckets): # Goes through the indicies of the possible times that staff can start a shift
     # Regular job decision variables
     shifts_at_bucket = [] # stores the possible shifts that can be started at the current time bucket
+    scores_at_bucket = []
     for shift_idx in range(len(SHIFTS)): # goes through the indicies of the possible shift lengths
       if ((4 + shift_idx + bucket_idx) <= num_buckets): # checks to make sure that the shift is feasible provided the number of time left in the work day
-        varname = "Start: " + work_hours[bucket_idx] + " Shift: " + SHIFTS[shift_idx]
         var = p.LpVariable(\
           name="Start: " + work_hours[bucket_idx] + " Shift: " + SHIFTS[shift_idx], lowBound=0, cat="Integer")
         for work_bucket in range(4 + shift_idx): # this loop fills in when workers are actively working
-          if varname not in active_workers_strings[bucket_idx + work_bucket]:
-            active_workers[bucket_idx + work_bucket].append(var)
-            active_workers_strings[bucket_idx + work_bucket].append(varname)
+          active_workers[bucket_idx + work_bucket].append(var)
         shifts_at_bucket.append(var) # work_hours[bucket_idx] + " " + SHIFTS[shift_idx]
+        scores_at_bucket.append(scores[shift_idx])
         # shifts_at_bucket.append(p.LpVariable(\
         #   name="People starting at " + work_hours[bucket_idx] + " with " + SHIFTS[shift_idx] + " long shift", \
         #   lowBound=0, cat="Integer"))
@@ -197,16 +197,14 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
     # Classified job decision variable
     for classified in range(classified_amt):
       if ((17 + bucket_idx) <= num_buckets): # checks whether the classified position starting at the current time is feasible
-        varname = "Start: " + work_hours[bucket_idx]
         var = p.LpVariable(\
           name="Start: " + work_hours[bucket_idx], lowBound=0, cat="Integer")
         for work_bucket in range(17): # adds the classified position as an active worker at each appropriate position
-          if varname not in active_workers_strings[bucket_idx + work_bucket]:
-            active_workers[bucket_idx + work_bucket].append(var) # work_hours[bucket_idx] + " " + "8:30 CF"
-            active_workers_strings[bucket_idx + work_bucket].append(varname)
+          active_workers[bucket_idx + work_bucket].append(var) # work_hours[bucket_idx] + " " + "8:30 CF"\
         classified_vars.append(var) # work_hours[bucket_idx] + " " + "8:30 CF"
 
     dec_var.append(shifts_at_bucket)
+    shift_scores.append(scores_at_bucket)
   # FOR DEBUGGING
   # for i in range(len(dec_var)):
   #   print(dec_var[i])
@@ -234,7 +232,7 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
   model += (p.lpSum(classified_vars) == classified_amt, "Req. amount Classified")
 
   # DUMMY constraint: sum of all decision variables <= allocated workers
-  model += (obj <= num_workers + classified_amt, "Worker limit")
+  model += (obj == num_workers + classified_amt, "Worker limit")
 
   # the max number of workers at each time bucket is the number in the apportionment data + 2
   min_apportionment = [(apportionment[i] / 2) for i in range(len(apportionment))]
@@ -244,18 +242,21 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
     if bucket_idx != 0 and bucket_idx != (len(active_workers) - 1):
       model += (p.lpSum(active_workers[bucket_idx]) >= min_apportionment[bucket_idx - 1], "Rec. min workers at " + str(work_hours[bucket_idx]))
 
+  obj = p.lpSum(classified_vars)
+  for i in range(len(dec_var)):
+    obj += p.lpSum(np.dot(dec_var[i], shift_scores[i]))
   model += obj
 
   # solves the model
   status = model.solve()
   print(status)
-'''
   # prints out the resulting decision variables
-  for var in model.variables():
-    print(str(var) + ": " + str(p.value(var)))
-  for name, constraint in model.constraints.items():
-    print(f"{name}: {constraint.value()}")
-'''
+  # for var in model.variables():
+  #   print(str(var) + ": " + str(p.value(var)))
+  # for name, constraint in model.constraints.items():
+  #   print(f"{name}: {constraint.value()}")
+  return model
+
 '''
 BG, EG, HG, MG should each have 1 classified worker
 
@@ -271,5 +272,9 @@ for day_idx in range(len(workdays)):
   for location_idx in range(len(LOCATIONS)):
     location = LOCATIONS[location_idx]
     print(location)
-    scheduler(apportionment_data[day_idx][location_idx], allocated_workers_day[weekday][location_idx], \
+    model = scheduler(apportionment_data[day_idx][location_idx], allocated_workers_day[weekday][location_idx], \
       staff_hrs[weekday][location], num_classified[location], location + "_" + weekday)
+    f = open(location + "_" + weekday + ".txt", "w")
+    for var in model.variables():
+      f.write(str(var) + ": " + str(p.value(var)) + "\n")
+    f.close()
