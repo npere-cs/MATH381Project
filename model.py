@@ -17,13 +17,14 @@ NUM_CLASSIFIED = {
   "PS": 1
 }
 
+# CAN BE CHANGED TO REFLECT REALIZED LABOR RESOURCES
 # represents the number of workers available to us on each day of week at each location
 NUM_WORKERS = {
-  "Mon": 44,
-  "Tue": 43,
-  "Wed": 42,
-  "Thu": 42,
-  "Fri": 41,
+  "Mon": 44, # originally 44
+  "Tue": 43, # originally 43
+  "Wed": 42, # originally 42
+  "Thu": 42, # originally 42
+  "Fri": 41, # originally 41
   "Sat": 3,
   "Sun": 4
 }
