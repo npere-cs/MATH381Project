@@ -17,8 +17,9 @@ NUM_CLASSIFIED = {
   "PS": 1
 }
 
-# CAN BE CHANGED TO REFLECT REALIZED LABOR RESOURCES
+# CAN BE MODIFIED TO REFLECT REALIZED LABOR RESOURCES ON EACH DAY OF THE WEEK
 # represents the number of workers available to us on each day of week at each location
+# Note: SAT AND SUN WORKERS WERE NOT CONSIDERED FOR THIS MODEL
 NUM_WORKERS = {
   "Mon": 44, # originally 44
   "Tue": 43, # originally 43
