@@ -62,10 +62,16 @@ Below are the definitions for the various notation that is found as part of the 
 *  Parnassus - "PS"
 
 ### Schedules
-Have the following format: `Start: HH:MM Shift: H:MM: X`
+Have the following format for regular positions: `Start: HH:MM Shift: H:MM: X`
 *  `Start: HH:MM` - Time of day that the shift starts
 *  `Shift: H:MM` - Length of the shift
 *  `X` - Number of employees starting at that time with the partiuclar shift length
+
+Union positions take the following format: `Start: HH:MM: X`
+*  `Start: HH:MM` - Time of day that the union position has the shift start
+*  `X` - Number of union employees starting at that time
+*  No shift length is specified here, as this type of position has a mandatory fixed length of 8.5 hours
+
 
 
 ## References
