@@ -14,7 +14,7 @@ NUM_CLASSIFIED = {
   "MS": 1, # originally 1
   "OP": 0,
   "OV": 1, # originally 1
-  "PS": 1
+  "PS": 1 # originally 0 (CANNOT HAVE CLASSIFIED WORKERS)
 }
 
 # CAN BE MODIFIED TO REFLECT REALIZED LABOR RESOURCES ON EACH DAY OF THE WEEK

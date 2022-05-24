@@ -52,14 +52,14 @@ Contains the python program that encodes the mathematical model.
 Below are the definitions for the various notation that is found as part of the model.
 
 ### Locations
-*  Microsoft Cafe - "MS"
-*  Mary Gates Hall Espresso - "MG"
-*  Parnassus - "PS"
-*  Evolutionary Grounds - "EG"
 *  By George - "BG"
-*  Orin's Place - "OP"
+*  Evolutionary Grounds - "EG"
 *  Husky Grind - "HG"
+*  Mary Gates Hall Espresso - "MG"
+*  Microsoft Cafe - "MS"
+*  Orin's Place - "OP"
 *  Overpass Espresso - "OV"
+*  Parnassus - "PS"
 
 ### Schedules
 Have the following format: `Start: HH:MM Shift: H:MM: X`
