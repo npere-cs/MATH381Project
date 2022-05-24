@@ -12,9 +12,9 @@ NUM_CLASSIFIED = {
   "HG": 0,
   "MG": 0,
   "MS": 1, # originally 1
-  "OP": 0,
+  "OP": 1,
   "OV": 1, # originally 1
-  "PS": 1 # originally 0 (CANNOT HAVE CLASSIFIED WORKERS)
+  "PS": 0 # originally 0 (CANNOT HAVE CLASSIFIED WORKERS)
 }
 
 # CAN BE MODIFIED TO REFLECT REALIZED LABOR RESOURCES ON EACH DAY OF THE WEEK
@@ -126,7 +126,7 @@ def apportionment2(data, workers):
     for location in range(1, num_locations):
       if (data[location] / geom_means[location]) > (data[max] / geom_means[max]):
         max = location
-    allocation[max] +=  1    
+    allocation[max] +=  1
     geom_means[max] = math.sqrt(allocation[max] * (allocation[max] + 1))
   return allocation
 
@@ -142,14 +142,15 @@ for day in range(len(workdays)):
   day_data = list(data.iloc[day])[1:9]
   workers = NUM_WORKERS[workdays[day]]
   # All 3 apportionment methods give the same results here
-  allocation = apportionment(day_data, workers)
-  # allocation = apportionment2(day_data, workers)
+  # allocation = apportionment(day_data, workers)
+  allocation = apportionment2(day_data, workers)
   # allocation = app.huntington_hill(day_data, workers)
   allocated_workers_day[workdays[day]] = allocation
   # DEBUGGING CODE - prints out the allocations
   # print(workdays[day])
   # print(allocation)
   # print("Allocated: " + str(sum(allocation)) + ", with actual: " + str(NUM_WORKERS[workdays[day]]))
+  print(allocation)
 
 apportionment_data = [None] * len(workdays) # [day of week][location idx][allocations (different lens)]
 
@@ -170,8 +171,8 @@ for day in range(len(workdays)):
     workers = allocated_workers_day[workdays[day]][location]
 
     # The apportionment methods below give some small variation in result between each other
-    allocated_hours = apportionment(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
-    # allocated_hours = apportionment2(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
+    # allocated_hours = apportionment(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
+    allocated_hours = apportionment2(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
     # allocated_hours = app.huntington_hill(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
     apportionment_at_location[location] = allocated_hours # saves allocation data to the location
     # print("Location: " + LOCATIONS[location] + " on " + workdays[day] + "\n" + str(allocated_hours)) # DEBUGGING
@@ -228,7 +229,7 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
         classified_vars.append(var) # work_hours[bucket_idx] + " " + "8:30 CF"
     dec_var.append(shifts_at_bucket)
     shift_scores.append(scores_at_bucket)
-  
+
   # FOR DEBUGGING
   # for i in range(len(dec_var)):
   #   print(dec_var[i])
@@ -244,7 +245,7 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
   # *  at least 2 people working at any given time
   # *  when num_workers + classified workers > 5, make at least 2 people present, otherwise make at least 1 person present
   min_workers = 1
-  if num_workers + classified_amt > 5:
+  if num_workers + classified_amt > 5 and lp_name[:2] != "PS":
     # make at least 2 people present at each time
     min_workers = 2
 
@@ -293,7 +294,7 @@ for day_idx in range(len(workdays)):
     print(location)
     model = scheduler(apportionment_data[day_idx][location_idx], allocated_workers_day[weekday][location_idx], \
       staff_hrs[weekday][location], NUM_CLASSIFIED[location], location + "_" + weekday)
-    f = open(location + "_" + weekday + ".txt", "w")
+    f = open("schedules/" + location + "_" + weekday + ".txt", "w")
     for var in model.variables():
       f.write(str(var) + ": " + str(p.value(var)) + "\n")
     f.close()
