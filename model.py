@@ -2,7 +2,6 @@ import math
 import numpy as np
 import pulp as p
 from itertools import compress
-from voting import apportionment as app
 import parsing # contains the parsed data
 
 # represents number of FIXED classified positions at location
@@ -65,46 +64,6 @@ hours = parsing.parsedHours()
 staff_hrs = parsing.parsedStaffing()
 
 '''
-OLD APPORTIONMENT FUNCTION
-(does not as nicely represent the formula found on wiki [see apportionment2 function])
-
-Function that accepts average transactional data for different locations at a particular day,
-as well as the total number of workers available to apportion during that day. Returns a list
-of the number of workers to allocate to each location
-'''
-def apportionment(data, workers):
-  INCREMENT = 0.1
-  allocation = [0] * len(data)
-  divisor = sum(data) / workers
-  quotas = [0] * len(data)
-  iterations = 0
-  while (sum(allocation) != workers):
-    iterations += 1
-    for idx in range(len(data)):
-      quotas[idx] = data[idx] / divisor
-      lower_quota = math.floor(quotas[idx])
-      geom_mean = math.sqrt(lower_quota * (lower_quota + 1))
-      if quotas[idx] > geom_mean:
-        allocation[idx] = math.ceil(quotas[idx])
-      else:
-        allocation[idx] = math.floor(quotas[idx])
-    if iterations % 100 == 0:
-      INCREMENT /= 10
-    if iterations == 500:
-      # DEBUGGING CODE - prints whether the current apportionment has not converged
-      # print("OVERFLOW: EXCEEDS REASONABLE NUM ITERATIONS")
-      # print("Current allocation: " + str(allocation) + "\nwith sum: " + str(sum(allocation)) \
-      #   + ", desired sum = " + str(workers))
-      break
-    if (sum(allocation) < workers):
-      divisor -= INCREMENT
-    else: # (sum(allocation) > workers)
-      divisor += INCREMENT
-  # print("num iters: " + str(iterations)) # DEBUGGING
-
-  return allocation
-
-'''
 Function that accepts average transactional data for different locations at a particular day,
 as well as the total number of workers available to apportion during that day. Returns a list
 of the number of workers to allocate to each location
@@ -117,9 +76,9 @@ clear as to what is going on (the formula can be nicely inferred from this funct
 https://en.wikipedia.org/wiki/Huntington%E2%80%93Hill_method
 https://en.wikipedia.org/wiki/United_States_congressional_apportionment#The_method_of_equal_proportions
 '''
-def apportionment2(data, workers):
+def apportionment(data, workers):
   num_locations = len(data)
-  allocation = [1] * num_locations
+  allocation = [1] * num_locations # initial apportionment, at least 1 worker per location
   geom_means = [math.sqrt(2)] * num_locations
   for i in range(num_locations, workers):
     max = 0
@@ -141,10 +100,7 @@ allocated_workers_day = {}
 for day in range(len(workdays)):
   day_data = list(data.iloc[day])[1:9]
   workers = NUM_WORKERS[workdays[day]]
-  # All 3 apportionment methods give the same results here
-  # allocation = apportionment(day_data, workers)
-  allocation = apportionment2(day_data, workers)
-  # allocation = app.huntington_hill(day_data, workers)
+  allocation = apportionment(day_data, workers)
   allocated_workers_day[workdays[day]] = allocation
   # DEBUGGING CODE - prints out the allocations
   # print(workdays[day])
@@ -170,10 +126,7 @@ for day in range(len(workdays)):
     # print("Location: " + locations[location] + str(location_transacs)) # DEBUGGING
     workers = allocated_workers_day[workdays[day]][location]
 
-    # The apportionment methods below give some small variation in result between each other
-    # allocated_hours = apportionment(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
-    allocated_hours = apportionment2(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
-    # allocated_hours = app.huntington_hill(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
+    allocated_hours = apportionment(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
     apportionment_at_location[location] = allocated_hours # saves allocation data to the location
     # print("Location: " + LOCATIONS[location] + " on " + workdays[day] + "\n" + str(allocated_hours)) # DEBUGGING
 
