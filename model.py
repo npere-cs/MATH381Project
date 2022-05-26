@@ -43,6 +43,7 @@ BUCKETS = [
 
 # Represents the possible shift lengths employees can take on
 SHIFTS = ["2:00", "2:30", "3:00", "3:30", "4:00", "4:30", "5:00"]
+# preference scores on a scale of 1 to 5 1 being least preferred and 5 being most preferred
 SCORES = [3, 3, 4, 5, 3, 3, 2]
 
 # dictionary containing the transactional data for each day of the week at each location
@@ -125,10 +126,14 @@ for day in range(len(workdays)):
     location_transacs = location_transacs[idx_open:idx_close + 1]
     # print("Location: " + locations[location] + str(location_transacs)) # DEBUGGING
     workers = allocated_workers_day[workdays[day]][location]
-
     allocated_hours = apportionment(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
     apportionment_at_location[location] = allocated_hours # saves allocation data to the location
     # print("Location: " + LOCATIONS[location] + " on " + workdays[day] + "\n" + str(allocated_hours)) # DEBUGGING
+    # FOR GENERATING HISTOGRAM DATA (for generating data on the appropriate time range for histograms)
+    full_hours_apport = [0] * len(location_hours)
+    for i in range(len(allocated_hours)):
+      full_hours_apport[idx_open + i] = allocated_hours[i] / (10/4)
+    print("Location: " + LOCATIONS[location] + " on " + workdays[day] + "\n" + str(full_hours_apport))
 
   apportionment_data[day] = apportionment_at_location # saving the day to the apportionment 3D array
 
@@ -207,7 +212,7 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
     model += constraint
 
   # increase minimum number of working for a given timeslot based on the timeslot's demand
-  min_apportionment = [(apportionment[i] / 2) for i in range(len(apportionment))]
+  min_apportionment = [(apportionment[i] / (10 / 4)) for i in range(len(apportionment))]
   # DEBUGGING CODE
   # print("length of active workers arr: " + str(len(active_workers)))
   # print("length of apportionment data: " + str(len(max_apportionment)))
@@ -225,7 +230,7 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
 
   # solves the model
   status = model.solve()
-  print(status)
+  # print(status)
   # prints out the resulting decision variables FOR DEBUGGING
   # for var in model.variables():
   #   print(str(var) + ": " + str(p.value(var)))
