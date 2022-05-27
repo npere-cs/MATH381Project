@@ -207,6 +207,9 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
     # make at least 2 people present at each time
     min_workers = 2
 
+  # model += (p.lpSum(active_workers[0]) <= 1, "Max workers during opening at " + str(work_hours[0]))
+  # model += (p.lpSum(active_workers[len(active_workers) - 1]) <= 1, "Max workers during closing at " + str(work_hours[len(active_workers) - 1]))
+
   for bucket_idx in range(len(active_workers)):
     constraint = (p.lpSum(active_workers[bucket_idx]) >= min_workers, "Min workers at " + str(work_hours[bucket_idx]))
     model += constraint
