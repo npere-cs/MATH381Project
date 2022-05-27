@@ -1,6 +1,8 @@
 import math
 import numpy as np
 import pulp as p
+import pandas as pd
+import matplotlib.pyplot as plt
 from itertools import compress
 import parsing # contains the parsed data
 
@@ -71,11 +73,6 @@ of the number of workers to allocate to each location
 
 Code is a slightly modified version of:
 https://theuforce.blogspot.com/2010/12/python-huntington-hill-method.html
-
-This function generates the same results as the first apportionment function, but this is more
-clear as to what is going on (the formula can be nicely inferred from this function [see wiki])
-https://en.wikipedia.org/wiki/Huntington%E2%80%93Hill_method
-https://en.wikipedia.org/wiki/United_States_congressional_apportionment#The_method_of_equal_proportions
 '''
 def apportionment(data, workers):
   num_locations = len(data)
@@ -207,6 +204,9 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
     # make at least 2 people present at each time
     min_workers = 2
 
+  # model += (p.lpSum(active_workers[0]) <= 1, "Max workers during opening at " + str(work_hours[0]))
+  # model += (p.lpSum(active_workers[len(active_workers) - 1]) <= 1, "Max workers during closing at " + str(work_hours[len(active_workers) - 1]))
+
   for bucket_idx in range(len(active_workers)):
     constraint = (p.lpSum(active_workers[bucket_idx]) >= min_workers, "Min workers at " + str(work_hours[bucket_idx]))
     model += constraint
@@ -243,16 +243,65 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
 # print(allocated_workers_day["Mon"][4])
 # scheduler(apportionment_data[0][4], allocated_workers_day["Mon"][4], staff_hrs["Mon"]["MS"], NUM_CLASSIFIED["MS"], "MS_Mon")
 
+# # loop containing the way to solve all LPs
+# for day_idx in range(len(workdays)):
+#   weekday = workdays[day_idx]
+#   print(weekday)
+#   for location_idx in range(len(LOCATIONS)):
+#     location = LOCATIONS[location_idx]
+#     print(location)
+#     model = scheduler(apportionment_data[day_idx][location_idx], allocated_workers_day[weekday][location_idx], \
+#       staff_hrs[weekday][location], NUM_CLASSIFIED[location], location + "_" + weekday)
+#     f = open("schedules/" + location + "_" + weekday + ".txt", "w")
+#     for var in model.variables():
+#       # writes to file the variables that are non-zero
+#       if var.value() > 0:
+#         f.write(str(var) + ": " + str(p.value(var)) + "\n")
+#     f.close()
+
+
 # loop containing the way to solve all LPs
 for day_idx in range(len(workdays)):
   weekday = workdays[day_idx]
-  print(weekday)
+  # print(weekday)
   for location_idx in range(len(LOCATIONS)):
     location = LOCATIONS[location_idx]
     print(location)
     model = scheduler(apportionment_data[day_idx][location_idx], allocated_workers_day[weekday][location_idx], \
       staff_hrs[weekday][location], NUM_CLASSIFIED[location], location + "_" + weekday)
-    f = open("schedules/" + location + "_" + weekday + ".txt", "w")
+    f = open("schedules/text_schedules/" + location + "_" + weekday + ".txt", "w")
+    data = []
+    employee_num = 1
+    classified_num = 1
     for var in model.variables():
-      f.write(str(var) + ": " + str(p.value(var)) + "\n")
+      # writes to file the variables that are non-zero
+      var_str = str(var)
+      var_val = var.value()
+      name = ""
+      if var_val > 0:
+        start_time = var_str[7:12]
+        start_time_idx = BUCKETS.index(start_time)
+        shift_len_idx = 17
+        for worker in range(int(var_val)):
+          if len(var_str) > 12:
+            shift_len = var_str[20:24]
+            shift_len_idx = 4 + SHIFTS.index(shift_len)
+            name = "E" + str(employee_num)
+            employee_num += 1
+          else:
+            name = "C" + str(classified_num)
+            classified_num += 1
+          row = [name, start_time_idx, shift_len_idx]
+          data.append(row)
+        f.write(var_str + ": " + str(var_val) + "\n")
     f.close()
+    df = pd.DataFrame(data, columns=["Name", "Start", "Len"])
+    x_bins = np.arange(len(BUCKETS))
+    fig, gnt = plt.subplots()
+    gnt.barh(df.Name, df.Len, left=df.Start)
+    gnt.set_xticklabels(BUCKETS)
+    plt.xlabel("Time") 
+    plt.ylabel("Employee")
+    plt.title("Employee Schedules for " + location + " on " + weekday)
+    plt.savefig("schedules/visual_schedules/" + location + "_" + weekday + ".png")
+

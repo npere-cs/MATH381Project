@@ -1,0 +1,6 @@
+Start:_07:00_Shift:_3:30: 1.0
+Start:_09:00_Shift:_3:30: 1.0
+Start:_09:30_Shift:_3:30: 1.0
+Start:_12:30_Shift:_3:30: 1.0
+Start:_13:00_Shift:_3:30: 1.0
+Start:_14:30_Shift:_3:30: 1.0
