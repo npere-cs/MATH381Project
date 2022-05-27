@@ -254,5 +254,7 @@ for day_idx in range(len(workdays)):
       staff_hrs[weekday][location], NUM_CLASSIFIED[location], location + "_" + weekday)
     f = open("schedules/" + location + "_" + weekday + ".txt", "w")
     for var in model.variables():
-      f.write(str(var) + ": " + str(p.value(var)) + "\n")
+      # writes to file the variables that are non-zero
+      if var.value() > 0:
+        f.write(str(var) + ": " + str(p.value(var)) + "\n")
     f.close()
