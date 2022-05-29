@@ -71,7 +71,7 @@ min_workers = {
     [0, 0.4, 0.8, 0.8, 1.2, 1.2, 1.6, 2.8, 2.0, 1.6, 2.0, 1.6, 1.2, 1.6, 1.2, 1.2, 0.8, 0.8, 0.4, 0.4, 0.4, 0]
   ]).transpose()
 }
-"""
+
 trans_data = parsing.parsedHalfHourData()
 for day in weekdays:
   curr_trans = trans_data[day[0:3]]
@@ -83,10 +83,12 @@ for day in weekdays:
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    curr_trans.plot(kind="bar", y=loc, ax=ax, position=1, legend=None, title="Transactions and Minimum Workers on " + day + " at " + loc)
+    curr_trans.plot(kind="bar", y=loc, ax=ax, legend=None, title="Transactions and Minimum Workers on " + day + " at " + loc)
     ax.set_ylabel("Average Transactions")
+    ax.set_xlabel("Time")
     ax.set_xticklabels(buckets)
     fig = ax.get_figure()
+    fig.subplots_adjust(bottom=0.2, left=0.1)
     fig.savefig("graphs/" + day + " at " + loc + ".png")
 
     fig = plt.figure()
@@ -96,18 +98,19 @@ for day in weekdays:
     curr_trans.plot(kind="bar", y=loc, ax=ax, width=0.4, position=1, legend=None, title="Transactions and Minimum Workers on " + day + " at " + loc)
     curr_work.plot(kind="bar", y=j, color="black", ax=ax2, width=0.4, position=0, legend=None)
     ax.set_ylabel("Average Transactions")
-    ax2.set_ylabel("Minimum Workers", rotation=270)
+    ax2.set_ylabel("Minimum Workers", rotation=270, labelpad=15)
+    ax.set_xlabel("Time")
     ax.set_xticklabels(buckets)
     fig = ax.get_figure()
+    fig.subplots_adjust(bottom=0.2)
     fig.savefig("graphs/Compare " + day + " at " + loc + ".png")
 
-"""
 daily_averages = parsing.parsedTotals()
 daily_averages = daily_averages.loc[:, daily_averages.columns!="Weekday"].transpose()
 for i in range(len(weekdays)):
   fig = plt.figure()
   ax = fig.add_subplot(111)
-  daily_averages.plot(kind="bar", y=i, ax=ax, width=0.25, position=1, legend=None, title="Transactions and Workers on " + weekdays[i])
+  daily_averages.plot(kind="bar", y=i, ax=ax, width=0.25, legend=None, title="Transactions and Workers on " + weekdays[i])
   ax.set_ylabel("Average Transactions")
   ax.set_xticklabels(locations, rotation=0)
   fig = ax.get_figure()
@@ -120,6 +123,7 @@ for i in range(len(weekdays)):
   daily_apportionments.plot(kind="bar", y=i, color="black", ax=ax2, width=0.25, position=0, legend=None)
   ax.set_ylabel("Average Transactions")
   ax2.set_ylabel("Workers Assigned", rotation=270)
+  ax.set_xlabel("Location")
   ax.set_xticklabels(locations, rotation=0)
   fig = ax.get_figure()
   fig.savefig("graphs/Compare " + weekdays[i] + " Totals.png")
