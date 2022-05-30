@@ -124,12 +124,13 @@ for day in range(len(workdays)):
     # print("Location: " + locations[location] + str(location_transacs)) # DEBUGGING
     workers = allocated_workers_day[workdays[day]][location]
     allocated_hours = apportionment(location_transacs, (10 * workers + 17 * NUM_CLASSIFIED[LOCATIONS[location]]))
+    allocated_hours = [(allocated_hours[i] / (10 / 4)) for i in range(len(allocated_hours))]
     apportionment_at_location[location] = allocated_hours # saves allocation data to the location
     # print("Location: " + LOCATIONS[location] + " on " + workdays[day] + "\n" + str(allocated_hours)) # DEBUGGING
     # FOR GENERATING HISTOGRAM DATA (for generating data on the appropriate time range for histograms)
     full_hours_apport = [0] * len(location_hours)
     for i in range(len(allocated_hours)):
-      full_hours_apport[idx_open + i] = allocated_hours[i] / (10/4)
+      full_hours_apport[idx_open + i] = allocated_hours[i]
     print("Location: " + LOCATIONS[location] + " on " + workdays[day] + "\n" + str(full_hours_apport))
 
   apportionment_data[day] = apportionment_at_location # saving the day to the apportionment 3D array
@@ -212,13 +213,12 @@ def scheduler(apportionment, num_workers, staff_hrs, classified_amt, lp_name):
     model += constraint
 
   # increase minimum number of working for a given timeslot based on the timeslot's demand
-  min_apportionment = [(apportionment[i] / (10 / 4)) for i in range(len(apportionment))]
   # DEBUGGING CODE
   # print("length of active workers arr: " + str(len(active_workers)))
   # print("length of apportionment data: " + str(len(max_apportionment)))
   for bucket_idx in range(len(active_workers)):
     if bucket_idx != 0 and bucket_idx != (len(active_workers) - 1):
-      model += (p.lpSum(active_workers[bucket_idx]) >= min_apportionment[bucket_idx - 1], "Rec. min workers at " + str(work_hours[bucket_idx]))
+      model += (p.lpSum(active_workers[bucket_idx]) >= apportionment[bucket_idx - 1], "Rec. min workers at " + str(work_hours[bucket_idx]))
   # sum of all classified shifts must equal num classified at location
   model += (p.lpSum(classified_vars) == classified_amt, "Req. amount Classified")
 
