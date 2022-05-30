@@ -388,8 +388,8 @@ def parsedHalfHourData():
   return res
 
 if __name__ == "__main__":
-  print(parsedData())
-  print(parsedTotals())
+  #print(parsedData())
+  #print(parsedTotals())
   #print(parsedHours())
   #print(parsedStaffing())
-  #print(parsedHalfHourData())
+  parsedHalfHourData()["Wed"].to_csv("Wednesday Transactional Data.csv", index=False)
